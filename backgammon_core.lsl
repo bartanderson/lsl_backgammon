@@ -580,10 +580,10 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
         
         if (white == NULL_KEY && black == NULL_KEY) {
             llSleep(2.0);
-            integer whiteDie1 = 1 + (integer)llFrand(6);
-            integer whiteDie2 = 1 + (integer)llFrand(6);
-            integer blackDie1 = 1 + (integer)llFrand(6);
-            integer blackDie2 = 1 + (integer)llFrand(6);
+            whiteDie1 = 1 + (integer)llFrand(6);
+            whiteDie2 = 1 + (integer)llFrand(6);
+            blackDie1 = 1 + (integer)llFrand(6);
+            blackDie2 = 1 + (integer)llFrand(6);
             
             llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
             llSleep(1.0);
@@ -595,11 +595,11 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
     if (whiteDie > blackDie) {
         turn = "white";
         u1 = whiteDie1;
-        u2 = blackDie1;
+        u2 = whiteDie2;  // FIX: Use winner's second die
     } else {
         turn = "black";
         u1 = blackDie1;
-        u2 = whiteDie1;
+        u2 = blackDie2;  // FIX: Use winner's second die
     }
     
     gCurrentState = STATE_MAIN_GAME;
@@ -633,10 +633,10 @@ default {
                 
                 if (white == NULL_KEY && black == NULL_KEY) {
                     llSleep(2.0);
-                    integer whiteDie1 = 1 + (integer)llFrand(6);
-                    integer whiteDie2 = 1 + (integer)llFrand(6);
-                    integer blackDie1 = 1 + (integer)llFrand(6);
-                    integer blackDie2 = 1 + (integer)llFrand(6);
+                    whiteDie1 = 1 + (integer)llFrand(6);
+                    whiteDie2 = 1 + (integer)llFrand(6);
+                    blackDie1 = 1 + (integer)llFrand(6);
+                    blackDie2 = 1 + (integer)llFrand(6);
                     
                     llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
                     llSleep(1.0);
@@ -680,10 +680,10 @@ default {
                 
                 if (white == NULL_KEY && black == NULL_KEY) {
                     llSleep(2.0);
-                    integer whiteDie1 = 1 + (integer)llFrand(6);
-                    integer whiteDie2 = 1 + (integer)llFrand(6);
-                    integer blackDie1 = 1 + (integer)llFrand(6);
-                    integer blackDie2 = 1 + (integer)llFrand(6);
+                    whiteDie1 = 1 + (integer)llFrand(6);
+                    whiteDie2 = 1 + (integer)llFrand(6);
+                    blackDie1 = 1 + (integer)llFrand(6);
+                    blackDie2 = 1 + (integer)llFrand(6);
                     
                     llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
                     llSleep(1.0);
@@ -768,3 +768,5 @@ default {
         }
     }
 }
+
+
