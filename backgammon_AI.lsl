@@ -1,7 +1,6 @@
 // BACKGAMMON AI - Clean computer opponent
-integer DEBUG_MODE = TRUE;
+integer DEBUG_MODE = FALSE;
 integer AI_LEVEL = 1;
-integer WAITING_FOR_BOARD_STATE = FALSE;
 
 // Player keys to track who is AI
 key white = NULL_KEY;
@@ -35,80 +34,6 @@ integer BLACK_HOME_END = 0;
 integer BOARD_SIZE = 24;
 integer FROM_BAR = -2;
 integer BEAR_OFF = -1;
-
-// ===== BEAR OFF HELPER FUNCTIONS =====
-integer getRequiredBearOffDistance(integer point, integer color) {
-    if (color == 0) return 24 - point;  // White: 18→6, 19→5, etc.
-    return point + 1;                   // Black: 5→6, 4→5, etc.
-}
-
-integer hasPlayerPiece(integer point, string playerColor) {
-    string pointContents = llList2String(BoardList, point);
-    return (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1);
-}
-
-list getHomeBoardPoints(string player) {
-    list range = getHomeBoardRange(player);
-    integer start = llList2Integer(range, 0); // White 18, Black 5
-    integer end = llList2Integer(range, 1); // White 23, Black 0
-    
-    list points = [];
-    integer step = -1; //  Black: 5→0
-    if (player == "white") step = 1; // White: 18->23
-    
-    integer current = start;
-    if (player == "white") current = end;
-    
-    while ((player == "white" && current >= start) || (player == "black" && current <= end)) {
-        points += current;
-        current += step;
-    }
-    
-    return points;
-}
-
-string findBearOffMove(integer dieValue) {
-    integer color = 1;
-    if (currentTurn == "white") color = 0;
-    string playerColor = "b";
-    if (color == 0) playerColor = "w";
-    list points = getHomeBoardPoints(currentTurn);
-    
-    if (DEBUG_MODE) {
-        llOwnerSay("DEBUG AI: findBearOffMove - die: " + (string)dieValue + " for " + currentTurn);
-    }
-    
-    // STEP 1: Exact matches from furthest points (highest priority)
-    integer i;
-    for (i = 0; i < llGetListLength(points); i++) {
-        integer point = llList2Integer(points, i);
-        if (hasPlayerPiece(point, playerColor)) {
-            integer requiredDistance = getRequiredBearOffDistance(point, color);
-            
-            // Exact match found - use it immediately
-            if (dieValue == requiredDistance) {
-                if (DEBUG_MODE) llOwnerSay("DEBUG AI: Exact match - bearing off from point " + (string)point);
-                return createBearOffMove(point, dieValue);
-            }
-        }
-    }
-    
-    // STEP 2: No exact matches - use die on furthest point that can bear off
-    for (i = 0; i < llGetListLength(points); i++) {
-        integer point = llList2Integer(points, i);
-        if (hasPlayerPiece(point, playerColor)) {
-            integer requiredDistance = getRequiredBearOffDistance(point, color);
-            
-            // Can bear off from this point (overshoot)
-            if (dieValue > requiredDistance) {
-                if (DEBUG_MODE) llOwnerSay("DEBUG AI: Overshoot - bearing off from furthest point " + (string)point);
-                return createBearOffMove(point, dieValue);
-            }
-        }
-    }
-    
-    return ""; // No bear off moves possible with this die
-}
 
 string generateHomeBoardMove() {
     if (DEBUG_MODE) llOwnerSay("DEBUG AI: generateHomeBoardMove for " + currentTurn);
@@ -286,8 +211,69 @@ list getHomeBoardRange(string player) {
     return [BLACK_HOME_START, BLACK_HOME_END];
 }
 
-
-
+string findBearOffMove(integer dieValue) {
+    list range = getHomeBoardRange(currentTurn);
+    integer homeStart = llList2Integer(range, 0);
+    integer homeEnd = llList2Integer(range, 1);
+    string playerColor = getPlayerColor(currentTurn);
+    
+    // Search from highest point to lowest point (furthest to closest)
+    // This ensures we try to bear off from the furthest points first
+    integer point;
+    if (currentTurn == "white") {
+        // White: search from 18 to 23 (furthest to closest)
+        for (point = homeStart; point <= homeEnd; point++) {
+            string pointContents = llList2String(BoardList, point);
+            if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
+                integer requiredDistance = 24 - point;
+                
+                // Check exact match or overshoot first
+                if (dieValue >= requiredDistance) {
+                    return createBearOffMove(point, dieValue);
+                }
+            }
+        }
+        
+        // If no exact/overshoot found, try undershoot from closest points
+        for (point = homeEnd; point >= homeStart; point--) {
+            string pointContents = llList2String(BoardList, point);
+            if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
+                // Check if undershoot is valid (no pieces on points requiring larger dice)
+                integer color = 0; // white
+                if (isValidBearOff(point, dieValue, color)) {
+                    return createBearOffMove(point, dieValue);
+                }
+            }
+        }
+    } else {
+        // Black: search from 5 to 0 (furthest to closest)
+        for (point = homeStart; point >= homeEnd; point--) {
+            string pointContents = llList2String(BoardList, point);
+            if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
+                integer requiredDistance = point + 1;
+                
+                // Check exact match or overshoot first
+                if (dieValue >= requiredDistance) {
+                    return createBearOffMove(point, dieValue);
+                }
+            }
+        }
+        
+        // If no exact/overshoot found, try undershoot from closest points
+        for (point = homeEnd; point <= homeStart; point++) {
+            string pointContents = llList2String(BoardList, point);
+            if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
+                // Check if undershoot is valid (no pieces on points requiring larger dice)
+                integer color = 1; // black
+                if (isValidBearOff(point, dieValue, color)) {
+                    return createBearOffMove(point, dieValue);
+                }
+            }
+        }
+    }
+    
+    return "";
+}
 string createBearOffMove(integer point, integer dieValue) {
     if (DEBUG_MODE) llOwnerSay("DEBUG AI: Found bear off at point " + (string)point + " with die " + (string)dieValue);
     return "PLAYER_MOVE|" + currentTurn + "|" + (string)point + "|" + 
@@ -433,10 +419,25 @@ string generateRandomMove() {
 generateAIMove() {
     if (DEBUG_MODE) llOwnerSay("AI Level " + (string)AI_LEVEL + " generating move...");
     
-    // Set flag to wait for fresh data
-    WAITING_FOR_BOARD_STATE = TRUE;
-    llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
-    // Move generation will happen in FRESH_BOARD_STATE handler
+    string move = "";
+    
+    if (AI_LEVEL == LEVEL_RANDOM) {
+        move = generateRandomMove();
+    }
+    else if (AI_LEVEL == LEVEL_TACTICAL) {
+        move = generateTacticalMove();
+    }
+    else if (AI_LEVEL == LEVEL_STRATEGIC) {
+        move = generateStrategicMove();
+    }
+    
+    if (move != "") {
+        if (DEBUG_MODE) llOwnerSay("DEBUG AI: Executing move: " + move);
+        llMessageLinked(LINK_SET, 0, move, NULL_KEY);
+    } else {
+        if (DEBUG_MODE) llOwnerSay("DEBUG AI: No valid moves found - ending turn");
+        llMessageLinked(LINK_SET, 0, "AI_NO_MOVES|" + currentTurn, NULL_KEY);
+    }
 }
 
 string checkSingleDieMove(integer fromPoint, integer dieValue, integer direction) {
@@ -579,6 +580,7 @@ string generateStrategicMove() {
 
 integer isValidBearOff(integer from_point, integer die_value, integer color) {
     if (!allPiecesInHomeBoard(color)) {
+        if (DEBUG_MODE) llOwnerSay("DEBUG AI: Not all pieces in home board");
         return FALSE;
     }
     
@@ -595,45 +597,26 @@ integer isValidBearOff(integer from_point, integer die_value, integer color) {
     }
     
     if (!inHomeBoard) {
+        if (DEBUG_MODE) llOwnerSay("DEBUG AI: Point not in home board");
         return FALSE;
     }
     
     // Calculate required bear off distance
     integer requiredDistance;
     if (color == 0) { // White
-        requiredDistance = 24 - from_point;
+        requiredDistance = 24 - from_point;  // White: 18→6, 19→5, 20→4, 21→3, 22→2, 23→1
     } else { // Black
-        requiredDistance = from_point + 1;
+        requiredDistance = from_point + 1;   // Black: 5→6, 4→5, 3→4, 2→3, 1→2, 0→1 
     }
     
-    // Exact match or overshoot is always valid
+    // Only allow exact match or overshoot
     if (die_value >= requiredDistance) {
+        if (DEBUG_MODE) llOwnerSay("DEBUG AI: Bear off valid - die " + (string)die_value + " >= required " + (string)requiredDistance);
         return TRUE;
     }
     
-    // For undershoot: check if there are pieces requiring larger dice
-    string playerColor = "w";
-    if (color == 1) playerColor = "b";
-    
-    if (color == 0) { // White
-        integer i;
-        for (i = WHITE_HOME_START; i < from_point; i++) {
-            string point = llList2String(BoardList, i);
-            if (point != "" && llSubStringIndex(point, playerColor) != -1) {
-                return FALSE;
-            }
-        }
-    } else { // Black
-        integer i;
-        for (i = from_point + 1; i <= BLACK_HOME_START; i++) {
-            string point = llList2String(BoardList, i);
-            if (point != "" && llSubStringIndex(point, playerColor) != -1) {
-                return FALSE;
-            }
-        }
-    }
-    
-    return TRUE;
+    if (DEBUG_MODE) llOwnerSay("DEBUG AI: Bear off invalid - die " + (string)die_value + " < required " + (string)requiredDistance);
+    return FALSE;
 }
 
 default {
@@ -692,11 +675,26 @@ default {
         else if (command == "FRESH_BOARD_STATE") {
             if (DEBUG_MODE) llOwnerSay("DEBUG AI: Received fresh board state");
             
+            // remove me - 
+            integer whiteOnBoard = 0;
+            integer blackOnBoard = 0;
+            integer i;
+            for (i = 0; i < 24; i++) {
+                string point = llList2String(BoardList, i);
+                if (point != "") {
+                    if (llSubStringIndex(point, "w") != -1) whiteOnBoard++;
+                    if (llSubStringIndex(point, "b") != -1) blackOnBoard++;
+                }
+            }
+            llOwnerSay("DEBUG AI: FRESH_BOARD_STATE - " +
+                       "WhiteOnBoard: " + (string)whiteOnBoard +
+                       " BlackOnBoard: " + (string)blackOnBoard);
+            // - when fixed
+            
             list params = llParseStringKeepNulls(str, ["|"], []);                
             
             if (llGetListLength(params) != 29) {
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: ERROR - Expected 29 parameters, got " + (string)llGetListLength(params));
-                WAITING_FOR_BOARD_STATE = FALSE;
                 return;
             }
             
@@ -719,30 +717,7 @@ default {
                 llOwnerSay("DEBUG AI: BlackBorneOff: " + blackBorneOff);
             }
             
-            // Only generate move if we're waiting for board state
-            if (WAITING_FOR_BOARD_STATE) {
-                WAITING_FOR_BOARD_STATE = FALSE;
-                
-                string move = "";
-                
-                if (AI_LEVEL == LEVEL_RANDOM) {
-                    move = generateRandomMove();
-                }
-                else if (AI_LEVEL == LEVEL_TACTICAL) {
-                    move = generateTacticalMove();
-                }
-                else if (AI_LEVEL == LEVEL_STRATEGIC) {
-                    move = generateStrategicMove();
-                }
-                
-                if (move != "") {
-                    if (DEBUG_MODE) llOwnerSay("DEBUG AI: Executing move: " + move);
-                    llMessageLinked(LINK_SET, 0, move, NULL_KEY);
-                } else {
-                    if (DEBUG_MODE) llOwnerSay("DEBUG AI: No valid moves found - ending turn");
-                    llMessageLinked(LINK_SET, 0, "AI_NO_MOVES|" + currentTurn, NULL_KEY);
-                }
-            }
+            generateAIMove();
         }
         else if (command == "TRIGGER_AI_TURN") {
             currentTurn = llList2String(params, 1);
@@ -761,9 +736,6 @@ default {
                 (currentTurn == "black" && AI_BLACK_CONTROLLED)) {
                 
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Processing AI turn for " + currentTurn);
-                // Add small delay to ensure previous moves are processed
-                llSleep(0.5);
-                WAITING_FOR_BOARD_STATE = TRUE;
                 llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
             } else {
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Ignoring turn - not controlled by AI");
