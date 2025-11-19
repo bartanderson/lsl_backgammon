@@ -435,8 +435,7 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         return;
     }
     
-    llMessageLinked(LINK_SET, 0, "BOARD_STATE|" + llDumpList2String(BoardList, "|"), NULL_KEY);
-    
+    // STEP 1: Send move notification first (no positioning)
     if (to_point == BEAR_OFF) {
         llMessageLinked(LINK_SET, 0, "BEAR_OFF_PIECE|" + movedPiece + "|" + (string)from_point, NULL_KEY);
     } else if (from_point == FROM_BAR) {
@@ -445,6 +444,11 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         llMessageLinked(LINK_SET, 0, "MOVE_PIECE|" + movedPiece + "|" + (string)from_point + "|" + (string)to_point, NULL_KEY);
     }
     
+    // STEP 2: Wait for any animations
+    llSleep(1.0);
+    
+    // STEP 3: Send FINAL board state (only this positions pieces)
+    llMessageLinked(LINK_SET, 0, "BOARD_STATE|" + llDumpList2String(BoardList, "|"), NULL_KEY);
     sendBarStateToRender();
     llSleep(2);
 
