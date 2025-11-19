@@ -1,5 +1,5 @@
 // BACKGAMMON CORE - Clean game logic
-integer DEBUG_MODE = FALSE;
+integer DEBUG_MODE = TRUE;
 
 // Game constants
 integer BOARD_SIZE = 24;
@@ -51,37 +51,49 @@ integer CORE_SIMULATING = FALSE;
 integer CORE_AI_LEVEL = 1;
 integer CORE_GAME_PAUSED = FALSE;
 
+// ===== BEAR OFF HELPER FUNCTIONS =====
+integer getRequiredBearOffDistance(integer point, integer color) {
+    if (color == 0) return 24 - point;  // White: 18→6, 19→5, etc.
+    return point + 1;                   // Black: 5→6, 4→5, etc.
+}
+
+integer hasPlayerPieceAtPoint(integer point, string playerColor) {
+    string pointContents = llList2String(BoardList, point);
+    return (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1);
+}
+
 validateBoardState() {
     if (!DEBUG_MODE) return;
     
     integer errors = 0;
-    integer i = 0;
+    integer i;
     
-    while (i < BOARD_SIZE) {
+    for (i = 0; i < BOARD_SIZE; i++) {
         string pointContents = llList2String(BoardList, i);
         if (pointContents != "") {
+            // More efficient duplicate checking
             list pieces = llParseString2List(pointContents, [","], []);
-            integer j = 0;
-            while (j < llGetListLength(pieces)) {
+            integer pieceCount = llGetListLength(pieces);
+            integer j;
+            integer k;
+            
+            for (j = 0; j < pieceCount; j++) {
                 string piece1 = llList2String(pieces, j);
-                integer k = j + 1;
-                while (k < llGetListLength(pieces)) {
+                for (k = j + 1; k < pieceCount; k++) {
                     string piece2 = llList2String(pieces, k);
                     if (piece1 == piece2) {
-                        llOwnerSay("DEBUG CORE: DUPLICATE " + piece1 + " at point " + (string)i + ": " + pointContents);
-                        errors = errors + 1;
+                        errors++;
+                        llOwnerSay("DEBUG CORE: DUPLICATE " + piece1 + " at point " + (string)i);
+                        // Break early to save memory
+                        k = pieceCount;
+                        j = pieceCount;
                     }
-                    k = k + 1;
                 }
-                j = j + 1;
             }
         }
-        i = i + 1;
     }
-    
-    if (errors > 0) {
-        llOwnerSay("DEBUG CORE: VALIDATION FAILED - " + (string)errors + " duplicate pieces found!");
-    }
+    if (errors > 0) llOwnerSay("DEBUG CORE: VALIDATION FAILED - " + (string)errors + " duplicate pieces found!");
+
 }
 
 sendBarStateToRender() {
@@ -328,13 +340,6 @@ integer isPointInHomeBoard(integer point, integer color) {
     }
 }
 
-integer calculateRequiredBearOffDistance(integer point, integer color) {
-    if (color == 0) { // White
-        return 24 - point;  // White: 18→6, 19→5, 20→4, 21→3, 22→2, 23→1
-    } else { // Black
-        return point + 1;   // Black: 5→6, 4→5, 3→4, 2→3, 1→2, 0→1
-    }
-}
 
 integer hasPiecesInRange(integer start, integer end, string playerColor) {
     // Ensure we're iterating in the right direction
@@ -358,120 +363,45 @@ integer hasPiecesInRange(integer start, integer end, string playerColor) {
     return FALSE;
 }
 
-integer hasPiecesRequiringLargerDice(integer point, integer color) {
-    string playerColor;
-    if (color == 0) playerColor = "w";
-    else playerColor = "b";
+integer isValidBearOff(integer from_point, integer die_value, integer color) {
+    if (!allPiecesInHomeBoard(color) || !isPointInHomeBoard(from_point, color)) return FALSE;
     
-    if (color == 0) { // White
-        // Check points from 18 to (point-1) - these require larger dice
-        if (point > WHITE_HOME_START) {
-            return hasPiecesInRange(WHITE_HOME_START, point - 1, playerColor);
-        }
-    } else { // Black
-        // Check points from (point+1) to 5 - these require larger dice
-        if (point < BLACK_HOME_START) {
-            return hasPiecesInRange(point + 1, BLACK_HOME_START, playerColor);
-        }
-    }
-    return FALSE;
-}
-
-integer canBearOffExactOrOvershoot(integer point, integer die_value, integer color) {
-    integer required = calculateRequiredBearOffDistance(point, color);
-    return (die_value >= required);
-}
-
-integer canBearOffUndershoot(integer point, integer die_value, integer color) {
-    integer required = calculateRequiredBearOffDistance(point, color);
-    if (die_value < required) {
-        return !hasPiecesRequiringLargerDice(point, color);
-    }
-    return FALSE;
-}
-
-debugBoardState(string context) {
-    if (!DEBUG_MODE) return;
+    integer requiredDistance = getRequiredBearOffDistance(from_point, color);
+    string playerColor = "b";
+    if(color == 0) playerColor = "w";
     
-    llOwnerSay("DEBUG CORE: " + context + " - Board State Analysis:");
-    
-    // Count white pieces on board
-    integer whiteOnBoard = 0;
-    integer blackOnBoard = 0;
+    // Check for exact matches
     integer i;
-    
-    for (i = 0; i < BOARD_SIZE; i++) {
-        string point = llList2String(BoardList, i);
-        if (point != "") {
-            list pieces = llParseString2List(point, [","], []);
-            integer j;
-            for (j = 0; j < llGetListLength(pieces); j++) {
-                string piece = llList2String(pieces, j);
-                if (llGetSubString(piece, 0, 0) == "w") {
-                    whiteOnBoard++;
-                } else {
-                    blackOnBoard++;
-                }
+    if (color == 0) {
+        for (i = WHITE_HOME_START; i <= WHITE_HOME_END; i++) {
+            if (hasPlayerPieceAtPoint(i, playerColor) && die_value == getRequiredBearOffDistance(i, color)) {
+                if (die_value != requiredDistance) return FALSE; // Exact match exists elsewhere
+                i = WHITE_HOME_END + 1; // break
+            }
+        }
+    } else {
+        for (i = BLACK_HOME_START; i >= BLACK_HOME_END; i--) {
+            if (hasPlayerPieceAtPoint(i, playerColor) && die_value == getRequiredBearOffDistance(i, color)) {
+                if (die_value != requiredDistance) return FALSE; // Exact match exists elsewhere
+                i = BLACK_HOME_END - 1; // break
             }
         }
     }
     
-    // Count pieces on bar
-    integer whiteOnBar = llGetListLength(WhiteBarList);
-    integer blackOnBar = llGetListLength(BlackBarList);
+    if (die_value >= requiredDistance) return TRUE;
     
-    // Count borne off pieces
-    integer whiteBorneOffCount = llGetListLength(WhiteBorneOff);
-    integer blackBorneOffCount = llGetListLength(BlackBorneOff);
-    
-    llOwnerSay("DEBUG CORE: White - On Board: " + (string)whiteOnBoard + 
-               ", On Bar: " + (string)whiteOnBar + 
-               ", Borne Off: " + (string)whiteBorneOffCount +
-               ", TOTAL: " + (string)(whiteOnBoard + whiteOnBar + whiteBorneOffCount));
-               
-    llOwnerSay("DEBUG CORE: Black - On Board: " + (string)blackOnBoard + 
-               ", On Bar: " + (string)blackOnBar + 
-               ", Borne Off: " + (string)blackBorneOffCount +
-               ", TOTAL: " + (string)(blackOnBoard + blackOnBar + blackBorneOffCount));
-    
-    // Check if totals match expected (15 pieces per player)
-    if ((whiteOnBoard + whiteOnBar + whiteBorneOffCount) != 15) {
-        llOwnerSay("DEBUG CORE: ERROR - White piece count mismatch!");
-    }
-    if ((blackOnBoard + blackOnBar + blackBorneOffCount) != 15) {
-        llOwnerSay("DEBUG CORE: ERROR - Black piece count mismatch!");
-    }
-}
-
-// Update the isValidBearOff function to be more restrictive
-integer isValidBearOff(integer from_point, integer die_value, integer color) {
-    if (DEBUG_MODE) {
-        llOwnerSay("DEBUG isValidBearOff: Checking point " + (string)from_point + 
-                  " with die " + (string)die_value + " for color " + (string)color);
+    // Check undershoot
+    if (color == 0) {
+        for (i = WHITE_HOME_START; i < from_point; i++) {
+            if (hasPlayerPieceAtPoint(i, playerColor)) return FALSE;
+        }
+    } else {
+        for (i = from_point + 1; i <= BLACK_HOME_START; i++) {
+            if (hasPlayerPieceAtPoint(i, playerColor)) return FALSE;
+        }
     }
     
-    // Check basic conditions
-    if (!allPiecesInHomeBoard(color)) {
-        if (DEBUG_MODE) llOwnerSay("DEBUG: Not all pieces in home board");
-        return FALSE;
-    }
-    
-    if (!isPointInHomeBoard(from_point, color)) {
-        if (DEBUG_MODE) llOwnerSay("DEBUG: Point not in home board");
-        return FALSE;
-    }
-    
-    // Calculate required bear off distance
-    integer requiredDistance = calculateRequiredBearOffDistance(from_point, color);
-    
-    // Only allow exact match or overshoot
-    if (die_value >= requiredDistance) {
-        if (DEBUG_MODE) llOwnerSay("DEBUG: Bear off valid - die " + (string)die_value + " >= required " + (string)requiredDistance);
-        return TRUE;
-    }
-    
-    if (DEBUG_MODE) llOwnerSay("DEBUG: Bear off invalid - die " + (string)die_value + " < required " + (string)requiredDistance);
-    return FALSE;
+    return TRUE;
 }
 
 // Update the BearOffStone function to add more validation
@@ -515,9 +445,6 @@ string BearOffStone(integer from_point, integer color) {
         BlackBorneOff += pieceToRemove;
         if (DEBUG_MODE) llOwnerSay("DEBUG BearOffStone: Added " + pieceToRemove + " to BlackBorneOff, count now: " + (string)llGetListLength(BlackBorneOff));
     }
-    
-    // Debug the board state after bearing off
-    debugBoardState("After bearing off " + pieceToRemove);
     
     return pieceToRemove;
 }
@@ -656,31 +583,30 @@ AddStone(string name, integer color, integer position) {
 }
 
 integer countPiecesOnBoard(integer color) {
+    string searchChar = "b";
+    if(color == 0) searchChar = "w";
     integer count = 0;
     integer i;
+    
     for (i = 0; i < BOARD_SIZE; i++) {
         string point = llList2String(BoardList, i);
         if (point != "") {
-            list pieces = llParseString2List(point, [","], []);
-            integer j;
-            for (j = 0; j < llGetListLength(pieces); j++) {
-                string piece = llList2String(pieces, j);
-                if ((color == 0 && llGetSubString(piece, 0, 0) == "w") ||
-                    (color == 1 && llGetSubString(piece, 0, 0) == "b")) {
+            // Count occurrences of the character directly without parsing full list
+            integer pos = 0;
+            while (pos < llStringLength(point)) {
+                string char = llGetSubString(point, pos, pos);
+                if (char == searchChar) {
                     count++;
                 }
+                pos++;
             }
         }
     }
+    
     return count;
 }
 
 processMove(integer from_point, integer to_point, integer die_value, integer movesUsed) {
-    if (DEBUG_MODE) {
-        llOwnerSay("DEBUG CORE: processMove - from: " + (string)from_point + 
-                  " to: " + (string)to_point + " die: " + (string)die_value);
-        debugBoardState("Before move");
-    }
     //temporary for problem solving
     llOwnerSay("DEBUG CORE - remove me and countPiecesOnBoard: processMove START - Turn: " + turn + 
           " From: " + (string)from_point + " To: " + (string)to_point +
@@ -753,11 +679,6 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
     sendBarStateToRender();
     llSleep(2);
     validateBoardState();
-    
-    // Add this before checking for game over
-    if (to_point == BEAR_OFF) {
-        debugBoardState("After bearing off piece");
-    }
 
     // Check for immediate game over after bearing off
     if (isGameOver()) {
@@ -981,7 +902,8 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
         u1 = blackDie1;// winner
         u2 = whiteDie1;
     }
-    
+    llOwnerSay("DEBUG CORE: First roll winner: " + turn + ", u1: " + (string)u1 + ", u2: " + (string)u2);
+    llOwnerSay("DEBUG CORE: CORE_WHITE_AI: " + (string)CORE_WHITE_AI + ", CORE_BLACK_AI: " + (string)CORE_BLACK_AI);    
     // COMMON TRANSITION TO MAIN GAME
     gCurrentState = STATE_MAIN_GAME;
     llMessageLinked(LINK_SET, 0, "FIRST_TURN|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
@@ -1124,7 +1046,14 @@ default {
             }
         }
         else if (command == "FIRST_TURN") {
-            triggerAIIfNeeded();
+            // Add this to ensure AI gets proper first turn trigger
+            if ((turn == "white" && CORE_WHITE_AI) || (turn == "black" && CORE_BLACK_AI)) {
+                if (DEBUG_MODE) llOwnerSay("DEBUG CORE: First turn AI trigger for " + turn);
+                llSleep(2.0);
+                llMessageLinked(LINK_SET, 0, "TRIGGER_AI_TURN|" + turn + "|" + (string)u1 + "|" + (string)u2 + "|0|0", NULL_KEY);
+            } else {
+                triggerAIIfNeeded();
+            }
         }
         else if (command == "DICE_ROLL") {
             string player = llList2String(params, 1);
