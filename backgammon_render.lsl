@@ -48,8 +48,7 @@ setDiePosition(string dieName, float u, float v, integer isVisible) {
     vector localPos = <x, y, z>;
     
     if (DEBUG_MODE) {
-        llOwnerSay("DEBUG: Positioning " + dieName + " at " + (string)localPos + 
-                  ", visible: " + (string)isVisible);
+        //llOwnerSay("DEBUG: Positioning " + dieName + " at " + (string)localPos + ", visible: " + (string)isVisible);
     }
     
     llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POS_LOCAL, localPos]);
@@ -321,6 +320,12 @@ hideMarker(integer markerType) {
 
 refreshAllPieces() {
     if (DEBUG_MODE_VERBOSE) llOwnerSay("DEBUG: refreshAllPieces() called. BoardList length: " + (string)llGetListLength(BoardList));
+    
+        // Always update bar pieces first - they have highest priority
+        Arrange(0, 24); // White bar
+        Arrange(1, 25); // Black bar
+    
+    // Then update all board points
     integer i;
     for (i = 0; i < 24; i++) {
         string pointState = llList2String(BoardList, i);
@@ -470,17 +475,33 @@ default {
             if(llGetSubString(piece, 0, 0) == "w") color = 0;
             else color = 1;
             
-            // For bar moves, the piece is already removed from bar lists
-            if (from_point != FROM_BAR) {
-                Arrange(color, from_point);  // Remove from source point
+            // For bar moves, ensure bar lists are updated before refresh
+            if (from_point == FROM_BAR) {
+                // Remove from appropriate bar list
+                if (llGetSubString(piece, 0, 0) == "w") {
+                    integer index = llListFindList(WhiteBarList, [piece]);
+                    if (index != -1) {
+                        WhiteBarList = llDeleteSubList(WhiteBarList, index, index);
+                        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from WhiteBarList");
+                    }
+                } else {
+                    integer index = llListFindList(BlackBarList, [piece]);
+                    if (index != -1) {
+                        BlackBarList = llDeleteSubList(BlackBarList, index, index);
+                        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from BlackBarList");
+                    }
+                }
+                // Update bar display immediately
+                Arrange(0, 24);
+                Arrange(1, 25);
+            } else {
+                // For regular moves, update the source point
+                Arrange(color, from_point);
             }
             
-            // For the destination point, let BOARD_STATE handle the positioning
-            // DO NOT call Arrange for to_point here - this causes the bar transition
-            
-            if (DEBUG_MODE) {
-                llOwnerSay("DEBUG RENDER: MOVE_PIECE processed - only arranged source point");
-            }
+            // Force full refresh to ensure consistency
+            llSleep(0.1); // Small delay to let core process
+            llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
         }
         else if (command == "ARRANGE_POINT") {
             integer color = llList2Integer(params, 1);
