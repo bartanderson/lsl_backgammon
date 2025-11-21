@@ -1,15 +1,11 @@
-# LSL Backgammon - Git Ignore File
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Editor files
-*.swp
-*.swo
-*~
-.vscode/
-.idea/
-
-# Temp files
-*.tmp
+# Ignore validation scripts and logs
+*.pyc
+__pycache__/
+validation_*.txt
+*.log
+quick_validate.py
+validate_game.py
+complete_validator.py
+val_out.txt
+quick_validation.log
+validation_output.log

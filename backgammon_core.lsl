@@ -1,5 +1,5 @@
 // BACKGAMMON CORE - Optimized game logic
-integer DEBUG_MODE = FALSE; // Reduced for production
+integer DEBUG_MODE = TRUE; // Reduced for production
 
 // Game constants
 integer BOARD_SIZE = 24;
@@ -252,7 +252,7 @@ integer isValidBearOff(integer from_point, integer die_value, integer color) {
     
     if (color == 0) { // White
         integer i;
-        for (i = WHITE_HOME_START; i < from_point; i++) {
+        for (i = from_point + 1; i <= WHITE_HOME_END; i++) {
             string point = llList2String(BoardList, i);
             if (point != "" && llSubStringIndex(point, playerColor) != -1) {
                 return FALSE;
@@ -399,6 +399,8 @@ AddStone(string name, integer color, integer position) {
 }
 
 processMove(integer from_point, integer to_point, integer die_value, integer movesUsed) {
+    if (DEBUG_MODE) llOwnerSay("CORE: processMove - " + turn + " from:" + (string)from_point + " to:" + (string)to_point + " die:" + (string)die_value + " movesUsed:" + (string)movesUsed);
+    
     integer color;
     if (turn == "white") color = 0;
     else color = 1;
@@ -421,10 +423,13 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         }
         movedPiece = MoveStoneFromBar(to_point, color);
     } else if (to_point == BEAR_OFF) {
+        if (DEBUG_MODE) llOwnerSay("CORE: Validating bear-off from:" + (string)from_point + " die:" + (string)die_value);
         if (!isValidBearOff(from_point, die_value, color)) {
+            if (DEBUG_MODE) llOwnerSay("CORE: Bear-off REJECTED - Invalid");
             llMessageLinked(LINK_SET, 0, "INVALID_MOVE|" + turn + "|10", NULL_KEY);
             return;
         }
+        if (DEBUG_MODE) llOwnerSay("CORE: Bear-off ACCEPTED");
         movedPiece = BearOffStone(from_point, color);
     } else {
         movedPiece = MoveStone(from_point, to_point, color);
@@ -452,13 +457,7 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
     sendBarStateToRender();
     llSleep(2);
 
-    if (isGameOver()) {
-        gCurrentState = STATE_GAME_OVER;
-        string winner = "white";
-        if (llGetListLength(BlackBorneOff) >= 15) winner = "black";
-        llMessageLinked(LINK_SET, 0, "GAME_OVER|" + winner, NULL_KEY);
-        return;
-    }
+    // Win check removed from here - now only checked at turn completion (line 487)
     
     if (!isDoubles) {
         if (movesUsed == 2) {
@@ -768,5 +767,6 @@ default {
         }
     }
 }
+
 
 

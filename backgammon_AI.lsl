@@ -1,5 +1,5 @@
 // BACKGAMMON AI - Clean computer opponent
-integer DEBUG_MODE = FALSE;
+integer DEBUG_MODE = TRUE;
 integer AI_LEVEL = 1;
 
 // Player keys to track who is AI
@@ -227,8 +227,9 @@ string findBearOffMove(integer dieValue) {
             if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
                 integer requiredDistance = 24 - point;
                 
-                // Check exact match or overshoot first
-                if (dieValue >= requiredDistance) {
+                // Validate using isValidBearOff to handle exact matches AND overshoots correctly
+                integer color = 0; // white
+                if (isValidBearOff(point, dieValue, color)) {
                     return createBearOffMove(point, dieValue);
                 }
             }
@@ -252,8 +253,9 @@ string findBearOffMove(integer dieValue) {
             if (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1) {
                 integer requiredDistance = point + 1;
                 
-                // Check exact match or overshoot first
-                if (dieValue >= requiredDistance) {
+                // Validate using isValidBearOff to handle exact matches AND overshoots correctly
+                integer color = 1; // black
+                if (isValidBearOff(point, dieValue, color)) {
                     return createBearOffMove(point, dieValue);
                 }
             }
@@ -604,19 +606,38 @@ integer isValidBearOff(integer from_point, integer die_value, integer color) {
     // Calculate required bear off distance
     integer requiredDistance;
     if (color == 0) { // White
-        requiredDistance = 24 - from_point;  // White: 18→6, 19→5, 20→4, 21→3, 22→2, 23→1
+        requiredDistance = 24 - from_point;
     } else { // Black
-        requiredDistance = from_point + 1;   // Black: 5→6, 4→5, 3→4, 2→3, 1→2, 0→1 
+        requiredDistance = from_point + 1;
     }
     
-    // Only allow exact match or overshoot
-    if (die_value >= requiredDistance) {
-        if (DEBUG_MODE) llOwnerSay("DEBUG AI: Bear off valid - die " + (string)die_value + " >= required " + (string)requiredDistance);
-        return TRUE;
+    // Exact match
+    if (die_value == requiredDistance) return TRUE;
+    
+    // Overshoot - only valid if bearing off from furthest point
+    if (die_value > requiredDistance) {
+        integer i;
+        if (color == 0) { // White
+            // Check if there are pieces on points further from bear-off (higher points)
+            for (i = from_point + 1; i <= WHITE_HOME_END; i++) {
+                string point = llList2String(BoardList, i);
+                if (llSubStringIndex(point, "w") != -1) {
+                    return FALSE; // There's a piece farther back
+                }
+            }
+        } else { // Black
+            // Check if there are pieces on points further from bear-off (lower points)
+            for (i = from_point - 1; i >= BLACK_HOME_END; i--) {
+                string point = llList2String(BoardList, i);
+                if (llSubStringIndex(point, "b") != -1) {
+                    return FALSE; // There's a piece farther back
+                }
+            }
+        }
+        return TRUE; // Overshoot is valid - this is the furthest piece
     }
     
-    if (DEBUG_MODE) llOwnerSay("DEBUG AI: Bear off invalid - die " + (string)die_value + " < required " + (string)requiredDistance);
-    return FALSE;
+    return FALSE; // Undershoot is never valid
 }
 
 default {
@@ -743,3 +764,4 @@ default {
         }
     }    
 }
+
