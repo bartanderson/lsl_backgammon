@@ -498,23 +498,6 @@ default {
                 // For regular moves, update the source point
                 Arrange(color, from_point);
             }
-            
-            // Force full refresh to ensure consistency
-            llSleep(0.1); // Small delay to let core process
-            llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
-        }
-        else if (command == "ARRANGE_POINT") {
-            integer color = llList2Integer(params, 1);
-            integer point = llList2Integer(params, 2);
-            
-            if (DEBUG_MODE) {
-        }
-        else if(command == "HIDE_MARKER") {
-            integer markerType = llList2Integer(params, 1);
-            hideMarker(markerType);
-        }
-        else if(command == "GAME_RESET") {
-            boardInitialized = FALSE;
             WhiteBarList = [];
             BlackBarList = [];
 
