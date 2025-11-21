@@ -1,5 +1,5 @@
 // BACKGAMMON MENU - Menu and AI control system
-integer DEBUG_MODE = TRUE;
+integer DEBUG_MODE = FALSE;
 
 // Menu system
 integer menu_listener;
@@ -557,3 +557,4 @@ default {
         }
     }
 }
+

@@ -528,26 +528,6 @@ default {
             } else {
                 BlackBarList += [piece];
                 if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
-            }
-            
-            // DO NOT call Arrange here - let BOARD_STATE handle the piece positioning
-            // The bar lists are now updated for when BOARD_STATE processes the bar positions
-        }
-        else if(command == "BEAR_OFF") {
-            string piece = llList2String(params, 1);
-            integer from_point = llList2Integer(params, 2);
-            
-            integer color;
-            if(llGetSubString(piece, 0, 0) == "w") color = 0;
-            else color = 1;
-            
-            Arrange(color, from_point);
-        }
-        else if (command == "DICE_RESULT") {
-            string player = llList2String(params, 1);
-            integer die1 = llList2Integer(params, 2);
-            integer die2 = llList2Integer(params, 3);
-            
             if (DEBUG_MODE) llOwnerSay("DEBUG: Showing dice result for " + player + ": " + (string)die1 + ", " + (string)die2);
             
             // Show the appropriate player's dice
