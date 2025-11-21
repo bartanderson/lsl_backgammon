@@ -498,6 +498,85 @@ default {
                 // For regular moves, update the source point
                 Arrange(color, from_point);
             }
+            
+            // Force full refresh to ensure consistency
+            llSleep(0.1); // Small delay to let core process
+            llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
+        }
+        else if (command == "ARRANGE_POINT") {
+            integer color = llList2Integer(params, 1);
+            integer point = llList2Integer(params, 2);
+            
+            if (DEBUG_MODE) {
+                llOwnerSay("DEBUG: Arranging point " + (string)point + " for color " + (string)color);
+            }
+            
+            Arrange(color, point);
+        }
+        else if(command == "HIT_PIECE") {
+            string piece = llList2String(params, 1);
+            integer from_point = llList2Integer(params, 2);
+            
+            if (DEBUG_MODE) {
+                llOwnerSay("DEBUG RENDER: HIT_PIECE received - " + piece + " from point " + (string)from_point);
+            }
+            
+            // ONLY update bar lists - BOARD_STATE will handle actual piece movement
+            if (llGetSubString(piece, 0, 0) == "w") {
+                WhiteBarList += [piece];
+                if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to WhiteBarList");
+            } else {
+                BlackBarList += [piece];
+                if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
+            }
+            
+            // DO NOT call Arrange here - let BOARD_STATE handle the piece positioning
+            // The bar lists are now updated for when BOARD_STATE processes the bar positions
+        }
+        else if(command == "BEAR_OFF_PIECE") {
+            string piece = llList2String(params, 1);
+            integer from_point = llList2Integer(params, 2);
+            
+            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Bear off piece " + piece + " from " + (string)from_point);
+            
+            // HIDE THE PIECE
+            integer linkNum = GetLinkNumber(piece);
+            if (linkNum != 0) {
+                // Move to hidden position (under the table/board)
+                llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POS_LOCAL, <0.0, 0.0, -1.0>]);
+            }
+            
+            integer color;
+            if(llGetSubString(piece, 0, 0) == "w") color = 0;
+            else color = 1;
+            
+            Arrange(color, from_point);
+        }
+        else if (command == "DICE_RESULT") {
+            string player = llList2String(params, 1);
+            integer die1 = llList2Integer(params, 2);
+            integer die2 = llList2Integer(params, 3);
+            
+            if (DEBUG_MODE) llOwnerSay("DEBUG: Showing dice result for " + player + ": " + (string)die1 + ", " + (string)die2);
+            
+            // Show the appropriate player's dice
+            showPlayerDice(player);
+            
+            // Update the dice to show the correct values
+            updateDiceValues(player, die1, die2);
+        }
+        else if(command == "SHOW_MARKER") {
+            integer markerType = llList2Integer(params, 1);
+            integer color = llList2Integer(params, 2);
+            integer position = llList2Integer(params, 3);
+            positionMarker(markerType, color, position);
+        }
+        else if(command == "HIDE_MARKER") {
+            integer markerType = llList2Integer(params, 1);
+            hideMarker(markerType);
+        }
+        else if(command == "GAME_RESET") {
+            boardInitialized = FALSE;
             WhiteBarList = [];
             BlackBarList = [];
 
