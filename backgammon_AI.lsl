@@ -10,6 +10,8 @@ key black = NULL_KEY;
 list BoardList = [];
 list WhiteBarList = [];
 list BlackBarList = [];
+list WhiteBorneOff = [];
+list BlackBorneOff = [];
 string currentTurn = "";
 integer currentDie1 = 0;
 integer currentDie2 = 0;
@@ -20,6 +22,15 @@ integer movesLeft = 0;
 integer AI_WHITE_CONTROLLED = FALSE;
 integer AI_BLACK_CONTROLLED = FALSE;
 integer AI_CONTROL_LEVEL = 1;
+
+// AI STATE MACHINE - Prevents race conditions
+integer AI_STATE_IDLE = 0;
+integer AI_STATE_REQUESTING_BOARD = 1;
+integer AI_STATE_PROCESSING = 2;
+integer AI_STATE_MOVE_SENT = 3;
+
+integer gAIState = 0;  // AI_STATE_IDLE
+string gCurrentMoveID = "";
 
 // AI level constants
 integer LEVEL_RANDOM = 1;
@@ -434,10 +445,18 @@ generateAIMove() {
     }
     
     if (move != "") {
+        gCurrentMoveID = (string)((integer)llFrand(1000000));
+        move += "|" + gCurrentMoveID;
         if (DEBUG_MODE) llOwnerSay("DEBUG AI: Executing move: " + move);
+        
+        // Transition to MOVE_SENT state
+        gAIState = AI_STATE_MOVE_SENT;
         llMessageLinked(LINK_SET, 0, move, NULL_KEY);
     } else {
         if (DEBUG_MODE) llOwnerSay("DEBUG AI: No valid moves found - ending turn");
+        
+        // Transition back to IDLE when no moves
+        gAIState = AI_STATE_IDLE;
         llMessageLinked(LINK_SET, 0, "AI_NO_MOVES|" + currentTurn, NULL_KEY);
     }
 }
@@ -678,69 +697,12 @@ default {
             black = (key)llList2String(params, 2);
             if (DEBUG_MODE) llOwnerSay("DEBUG AI: Player keys set - white: " + (string)white + ", black: " + (string)black);
         }
-        else if (command == "AI_REQUEST_MOVE") {
+        else if (command == "TRIGGER_AI_TURN") {
             if (DEBUG_MODE) llOwnerSay("DEBUG AI: Requesting fresh board state from core");
             
-            llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
+            // RACE CONDITION FIX: Clear current move ID so stale acknowledgments don't reset state
+            gCurrentMoveID = "";
             
-            currentTurn = llList2String(params, 1);
-            currentDie1 = llList2Integer(params, 2);
-            currentDie2 = llList2Integer(params, 3);
-            isDoubles = llList2Integer(params, 4);
-            movesLeft = llList2Integer(params, 5);
-            
-            if (DEBUG_MODE) {
-                llOwnerSay("DEBUG AI: Received AI_REQUEST_MOVE - turn: " + currentTurn + ", dice: " + (string)currentDie1 + "," + (string)currentDie2);
-            }
-        }
-        else if (command == "FRESH_BOARD_STATE") {
-            if (DEBUG_MODE) llOwnerSay("DEBUG AI: Received fresh board state");
-            
-            // remove me - 
-            integer whiteOnBoard = 0;
-            integer blackOnBoard = 0;
-            integer i;
-            for (i = 0; i < 24; i++) {
-                string point = llList2String(BoardList, i);
-                if (point != "") {
-                    if (llSubStringIndex(point, "w") != -1) whiteOnBoard++;
-                    if (llSubStringIndex(point, "b") != -1) blackOnBoard++;
-                }
-            }
-            llOwnerSay("DEBUG AI: FRESH_BOARD_STATE - " +
-                       "WhiteOnBoard: " + (string)whiteOnBoard +
-                       " BlackOnBoard: " + (string)blackOnBoard);
-            // - when fixed
-            
-            list params = llParseStringKeepNulls(str, ["|"], []);                
-            
-            if (llGetListLength(params) != 29) {
-                if (DEBUG_MODE) llOwnerSay("DEBUG AI: ERROR - Expected 29 parameters, got " + (string)llGetListLength(params));
-                return;
-            }
-            
-            BoardList = llList2List(params, 1, 24);
-            
-            string whiteBar = llList2String(params, 25);
-            string blackBar = llList2String(params, 26);
-            
-            string whiteBorneOff = llList2String(params, 27);
-            string blackBorneOff = llList2String(params, 28);
-            
-            WhiteBarList = llParseString2List(whiteBar, [","], []);
-            BlackBarList = llParseString2List(blackBar, [","], []);
-            
-            if (DEBUG_MODE) {
-                llOwnerSay("DEBUG AI: BoardList length: " + (string)llGetListLength(BoardList));
-                llOwnerSay("DEBUG AI: WhiteBarList: " + llDumpList2String(WhiteBarList, ","));
-                llOwnerSay("DEBUG AI: BlackBarList: " + llDumpList2String(BlackBarList, ","));
-                llOwnerSay("DEBUG AI: WhiteBorneOff: " + whiteBorneOff);
-                llOwnerSay("DEBUG AI: BlackBorneOff: " + blackBorneOff);
-            }
-            
-            generateAIMove();
-        }
-        else if (command == "TRIGGER_AI_TURN") {
             currentTurn = llList2String(params, 1);
             currentDie1 = llList2Integer(params, 2);
             currentDie2 = llList2Integer(params, 3);
@@ -757,9 +719,51 @@ default {
                 (currentTurn == "black" && AI_BLACK_CONTROLLED)) {
                 
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Processing AI turn for " + currentTurn);
+                
+                // Transition to REQUESTING_BOARD state
+                gAIState = AI_STATE_REQUESTING_BOARD;
                 llMessageLinked(LINK_SET, 0, "REQUEST_BOARD_STATE", NULL_KEY);
             } else {
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Ignoring turn - not controlled by AI");
+            }
+        }
+        else if (command == "FRESH_BOARD_STATE") {
+            if (DEBUG_MODE) llOwnerSay("DEBUG AI: Received FRESH_BOARD_STATE");
+            integer idx = 1;
+            // Update BoardList (24 points)
+            list newBoard = [];
+            integer i;
+            for (i = 0; i < 24; i++) {
+                newBoard += llList2String(params, idx);
+                idx++;
+            }
+            BoardList = newBoard;
+            // Update bar and borne off lists
+            WhiteBarList = llParseString2List(llList2String(params, idx), [","], []); idx++;
+            BlackBarList = llParseString2List(llList2String(params, idx), [","], []); idx++;
+            WhiteBorneOff = llParseString2List(llList2String(params, idx), [","], []); idx++;
+            BlackBorneOff = llParseString2List(llList2String(params, idx), [","], []); idx++;
+            // Ignore signature (params[idx])
+            if (gAIState == AI_STATE_REQUESTING_BOARD) {
+                gAIState = AI_STATE_PROCESSING;
+                generateAIMove();
+            } else {
+                // Remain idle; board updated
+                if (DEBUG_MODE) llOwnerSay("DEBUG AI: Board state updated while IDLE");
+            }
+        }
+        else if (command == "MOVE_ACKNOWLEDGED") {
+            string moveID = llList2String(params, 1);
+            if (moveID == gCurrentMoveID) {
+                // RACE CONDITION FIX: Only reset to IDLE if we are actually waiting for an ack
+                // If we've already started a new turn (REQUESTING_BOARD), ignore this old ack
+                if (gAIState == AI_STATE_MOVE_SENT) {
+                    if (DEBUG_MODE) llOwnerSay("DEBUG AI: Move acknowledged, returning to IDLE");
+                    gAIState = AI_STATE_IDLE;
+                    gCurrentMoveID = "";
+                } else {
+                    if (DEBUG_MODE) llOwnerSay("DEBUG AI: Ignoring stale MOVE_ACKNOWLEDGED (State: " + (string)gAIState + ")");
+                }
             }
         }
     }    
