@@ -65,6 +65,24 @@ setUpDie(string name) {
     llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 2, tex, <.15, .8, 0>, <.412, .01, 0>, 0]);
 }
 
+integer isPlayerAllowed(key avatar, string requestedColor) {
+    // Always allow in simulation mode (both players NULL)
+    if (white == NULL_KEY && black == NULL_KEY) {
+        return (avatar == llGetOwner());
+    }
+    
+    // Normal mode: check against stored player keys
+    if (requestedColor == "white") {
+        return (avatar == white);
+    } else if (requestedColor == "black") {
+        return (avatar == black);
+    }
+    return FALSE;
+}
+
+integer GetAgentLinkNumber(key avatar) {
+    integer linkNum = 1 + llGetNumberOfPrims();
+    key linkKey;
     while((linkKey = llGetLinkKey(--linkNum))) {
         if(avatar == linkKey) return linkNum;
     }
