@@ -65,32 +65,6 @@ setUpDie(string name) {
     llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 2, tex, <.15, .8, 0>, <.412, .01, 0>, 0]);
 }
 
-integer isPlayerAllowed(key avatar, string requestedColor) {
-    // Always allow in simulation mode (both players NULL)
-    if (white == NULL_KEY && black == NULL_KEY) {
-        return (avatar == llGetOwner());
-    }
-    
-    // Normal mode: check against stored player keys
-    if (requestedColor == "white") {
-        return (avatar == white);
-    } else if (requestedColor == "black") {
-            vector main = llList2Vector(llGetLinkPrimitiveParams(GetLinkNumber("Backgammon"), [PRIM_POSITION]), 0);
-            vector someplayer = llList2Vector(llGetLinkPrimitiveParams(i, [PRIM_POSITION]), 0);
-            
-            if(someplayer.y - main.y > .5) {
-                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)llGetLinkKey(i), NULL_KEY);
-            }
-            else if(someplayer.y - main.y < -.5) {
-                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)llGetLinkKey(i), NULL_KEY);
-            }
-        }
-    }
-}
-
-integer GetAgentLinkNumber(key avatar) {
-    integer linkNum = 1 + llGetNumberOfPrims();
-    key linkKey;
     while((linkKey = llGetLinkKey(--linkNum))) {
         if(avatar == linkKey) return linkNum;
     }
