@@ -21,6 +21,10 @@ integer currentDie2 = 0;
 // CONTROL STATE from Menu
 integer UI_SIMULATING = FALSE;
 
+// Click debouncing
+float gLastClickTime = 0.0;
+float CLICK_DEBOUNCE = 0.5; // 500ms
+
 // State Constants
 integer gCurrentState = 0;
 integer STATE_RESET = 0;
@@ -71,82 +75,181 @@ integer isPlayerAllowed(key avatar, string requestedColor) {
     if (requestedColor == "white") {
         return (avatar == white);
     } else if (requestedColor == "black") {
-        return (avatar == black);
+            vector main = llList2Vector(llGetLinkPrimitiveParams(GetLinkNumber("Backgammon"), [PRIM_POSITION]), 0);
+            vector someplayer = llList2Vector(llGetLinkPrimitiveParams(i, [PRIM_POSITION]), 0);
+            
+            if(someplayer.y - main.y > .5) {
+                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)llGetLinkKey(i), NULL_KEY);
+            }
+            else if(someplayer.y - main.y < -.5) {
+                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)llGetLinkKey(i), NULL_KEY);
+            }
+        }
     }
-    
-    return FALSE;
 }
 
-setDieOrientation(string name, integer value) {
-    integer n = GetLinkNumber(name);
-    if (n == 0) return;
-    
-    rotation targetRot;
-    
-    if (value == 1) targetRot = <0.00000, 0.00000, 0.00000, 1.00000>;
-    else if (value == 2) targetRot = <-0.70711, -0.00000, 0.00000, 0.70711>;
-    else if (value == 3) targetRot = <0.70711, 0.00000, 0.00000, 0.70711>;
-    else if (value == 4) targetRot = <0.00000, 0.70711, 0.00000, 0.70711>;
-    else if (value == 5) targetRot = <1.00000, 0.00000, 0.00000, 0.00000>;
-    else if (value == 6) targetRot = <0.00000, -0.70711, 0.00000, 0.70711>;
-    else targetRot = ZERO_ROTATION;
-
-    llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, targetRot]);   
-    llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, targetRot]);   
-    llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, targetRot]);   
-    llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, targetRot]);   
+integer GetAgentLinkNumber(key avatar) {
+    integer linkNum = 1 + llGetNumberOfPrims();
+    key linkKey;
+    while((linkKey = llGetLinkKey(--linkNum))) {
+        if(avatar == linkKey) return linkNum;
+    }
+    return 0x7FFFFFFF;
 }
 
-animateDieRoll(string name, integer finalValue) {
-    if (!gDiceAnimation) {
-        setDieOrientation(name, finalValue);
-        return;
+sendMessage(string message) {
+    if (white != NULL_KEY) llRegionSayTo(white, 0, message);
+    if (black != NULL_KEY) llRegionSayTo(black, 0, message);
+    if (white == NULL_KEY && black == NULL_KEY) llOwnerSay(message);
+}
+
+initPointUVs() {
+    float rightEdge = 0.991;
+    float rightBar = 0.553;
+    float leftBar = 0.445;
+    float leftEdge = 0.006;
+    
+    pointUVs = [];
+    
+    float rightSegment = (rightEdge - rightBar) / 6;
+    integer i;
+    for(i = 0; i < 6; i = i + 1) {
+        float center = rightEdge - (i * rightSegment) - (rightSegment / 2);
+        pointUVs = pointUVs + center;
     }
     
-    integer n = GetLinkNumber(name);
-    if (n == 0) return;
+    float leftSegment = (leftBar - leftEdge) / 6;
+    for(i = 0; i < 6; i = i + 1) {
+        float center = leftBar - (i * leftSegment) - (leftSegment / 2);
+        pointUVs = pointUVs + center;
+    }
     
-    llSetLinkPrimitiveParamsFast(n, [
-        PRIM_OMEGA, <1, 1, 1>, PI, 1.0
-    ]);
+    for(i = 11; i >= 0; i = i - 1) {
+        pointUVs = pointUVs + llList2Float(pointUVs, i);
+    }
+}
+
+integer findClosestPoint(vector touchUV) {
+    if (DEBUG_MODE) {
+        llOwnerSay("DEBUG: Finding closest point for UV: " + (string)touchUV);
+    }
+    integer closestPoint = -1;
+    float minDistance = 0.1;
+    
+    integer isTopHalf = (touchUV.y < 0.5);
     
     integer i;
-    for(i = 0; i < 8; i = i + 1) {
-        integer tempValue = (integer)llFrand(6) + 1;
+    for(i = 0; i < 24; i = i + 1) {
+        float pointU = llList2Float(pointUVs, i);
+        float distance = llFabs(touchUV.x - pointU);
         
-        rotation tempRot;
-        if (tempValue == 1) tempRot = <0.00000, 0.00000, 0.00000, 1.00000>;
-        else if (tempValue == 2) tempRot = <-0.70711, -0.00000, 0.00000,0.00000>;
-        else if (tempValue == 3) tempRot = <0.00000, -0.70711, 0.00000, 0.00000>;
-        else if (tempValue == 4) tempRot = <0.00000, 0.70711, 0.00000, 0.00000>;
-        else if (tempValue == 5) tempRot = <0.70711, 0.00000, 0.00000, 0.00000>;
-        else if (tempValue == 6) tempRot = <1.00000, 0.00000, 0.00000, 0.00000>;
-        else tempRot = ZERO_ROTATION;
-        
-        llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, tempRot]);
-        llSleep(0.1);
+        if ((isTopHalf && i >= 12) || (!isTopHalf && i < 12)) {
+            if(distance < minDistance) {
+                minDistance = distance;
+                closestPoint = i;
+            }
+        }
     }
     
-    llSetLinkPrimitiveParamsFast(n, [PRIM_OMEGA, <0, 0, 0>, 0, 0]);
-    llSetLinkPrimitiveParamsFast(n, [PRIM_OMEGA, <0, 0, 0>, 0, 0]);
+    return closestPoint;
+}
+
+resetUIState() {
+    gCurrentState = STATE_RESET;
+    turn = "";
+    currentDie1 = 0;
+    currentDie2 = 0;
+    isDoubles = FALSE;
+    movesLeft = 0;
+    pieceSelected = FALSE;
+    selectedPoint = -1;
+    selectedPlayer = NULL_KEY;
+    validMoves = [];
     
-    setDieOrientation(name, finalValue);
-}
+    white = NULL_KEY;
+    black = NULL_KEY;
+    simulating = FALSE;
+    
+    setDieOrientation("wdie1", 1);
+    setDieOrientation("wdie2", 1);
+    setDieOrientation("bdie1", 1);
+// BACKGAMMON UI - Clean user interface
+integer DEBUG_MODE = TRUE;
 
-animateDiceRoll(string player, integer die1, integer die2) {
-    if (player == "white") {
-        animateDieRoll("wdie1", die1);
-        animateDieRoll("wdie2", die2);
-    } else {
-        animateDieRoll("bdie1", die1);
-        animateDieRoll("bdie2", die2);
+// Game state
+integer simulating = FALSE;
+integer isDoubles = FALSE;
+integer movesLeft = 0;
+integer gDiceAnimation = FALSE;
+
+key white = NULL_KEY; 
+key black = NULL_KEY;
+string turn = "";
+list pointUVs = [];
+integer pieceSelected = FALSE;
+integer selectedPoint = -1;
+key selectedPlayer = NULL_KEY;
+list validMoves = [];
+integer currentDie1 = 0;
+integer currentDie2 = 0;
+
+// CONTROL STATE from Menu
+integer UI_SIMULATING = FALSE;
+
+// Click debouncing
+float gLastClickTime = 0.0;
+float CLICK_DEBOUNCE = 0.5; // 500ms
+
+// State Constants
+integer gCurrentState = 0;
+integer STATE_RESET = 0;
+integer STATE_FIRST_ROLL = 1;
+integer STATE_MAIN_GAME = 2;
+integer STATE_GAME_OVER = 3;
+
+// Movement constants
+integer BEAR_OFF = -1;
+integer FROM_BAR = -2;
+
+// Board geometry
+integer BOARD_SIZE = 24;
+
+// Essential functions
+integer GetLinkNumber(string linkName) {
+    integer x; 
+    integer numprims = llGetNumberOfPrims();
+    for(x = 1; x <= numprims; x = x + 1) {
+        if(linkName == llGetLinkName(x)) return x;
     }
+    return 0;
 }
 
-ResetSeatedPlayers() {
-    integer i;
-    for(i = 1; i <= llGetNumberOfPrims(); i = i + 1) {
-        if(llGetAgentSize(llGetLinkKey(i)) != ZERO_VECTOR) {
+setUpDie(string name) {
+    integer n = GetLinkNumber(name);
+    string tex;
+    string wtex = "2c044d5a-0d84-4104-8877-626404c97e71";
+    string btex = "e798a047-17da-74ef-953e-a760ffe0d74d";
+    if(llGetSubString(name, 0, 0) == "b") tex = btex;
+    else if(llGetSubString(name, 0, 0) == "w") tex = wtex;
+    
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 0, tex, <.15, .9, 0>, <.585, .01, 0>, 0]);
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 1, tex, <.15, .9, 0>, <.745, .01, 0>, 0]);
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 3, tex, <.15, .9, 0>, <.915, .01, 0>, 0]);
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 4, tex, <.15, .9, 0>, <.080, .01, 0>, 0]);
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 5, tex, <.15, .9, 0>, <.245, .01, 0>, 0]);
+    llSetLinkPrimitiveParamsFast(n, [PRIM_TEXTURE, 2, tex, <.15, .8, 0>, <.412, .01, 0>, 0]);
+}
+
+integer isPlayerAllowed(key avatar, string requestedColor) {
+    // Always allow in simulation mode (both players NULL)
+    if (white == NULL_KEY && black == NULL_KEY) {
+        return (avatar == llGetOwner());
+    }
+    
+    // Normal mode: check against stored player keys
+    if (requestedColor == "white") {
+        return (avatar == white);
+    } else if (requestedColor == "black") {
             vector main = llList2Vector(llGetLinkPrimitiveParams(GetLinkNumber("Backgammon"), [PRIM_POSITION]), 0);
             vector someplayer = llList2Vector(llGetLinkPrimitiveParams(i, [PRIM_POSITION]), 0);
             
@@ -253,15 +356,7 @@ resetUIState() {
 
 default {
     state_entry() {
-        setUpDie("wdie1");
-        setUpDie("wdie2");
-        setUpDie("bdie1");
-        setUpDie("bdie2");
-        
-        setDieOrientation("wdie1", 1);
-        setDieOrientation("wdie2", 1);
-        setDieOrientation("bdie1", 1);
-        setDieOrientation("bdie2", 1);
+        // Dice setup moved to Render
         
         ResetSeatedPlayers();
         initPointUVs();
@@ -303,9 +398,15 @@ default {
     }
     
     touch_start(integer total_number) {
-        // DEBUG: Show current state and turn
-        llOwnerSay("DEBUG: Touch detected - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");
+        // Debounce rapid clicks
+        float now = llGetTime();
+        if (now - gLastClickTime < CLICK_DEBOUNCE) {
+            return; // Ignore rapid clicks
+        }
+        gLastClickTime = now;
         
+        // DEBUG: Show current state and turn
+        llOwnerSay("DEBUG: Touch detected - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");        
         integer detLinkNumber = llDetectedLinkNumber(0);
         key detLinkKey = llDetectedKey(0);
         string linkName = llGetLinkName(detLinkNumber);
@@ -358,78 +459,54 @@ default {
                         llOwnerSay("DEBUG: Entering move validation - keys match!");
                         llOwnerSay("DEBUG: Moving from " + (string)selectedPoint + " to " + (string)internalPoint);
                     }
-                    integer distance;
-                    integer direction = 1;
-                    if (turn == "black") direction = -1;
                     
-                    if (selectedPoint == FROM_BAR) {
-                        if (DEBUG_MODE) llOwnerSay("DEBUG: Moving from BAR to point " + (string)internalPoint);
-                        if (turn == "white") {
-                            distance = internalPoint + 1;
+                    // Check if the clicked point is a valid destination
+                    integer isValid = FALSE;
+                    integer destIndex = llListFindList(validMoves, [internalPoint]);
+                    
+                    if (destIndex != -1) {
+                        isValid = TRUE;
+                    }
+                    
+                    if (isValid) {
+                        // Calculate dice used for this move
+                        integer distance;
+                        if (selectedPoint == FROM_BAR) {
+                            if (turn == "white") distance = internalPoint + 1;
+                            else distance = 24 - internalPoint;
                         } else {
-                            distance = 24 - internalPoint;
-                        }
-                    } else {
-                        if (turn == "white") {
-                            // White moves from low to high points
-                            distance = internalPoint - selectedPoint;
-                        } else {
-                            // Black moves from high to low points  
-                            distance = selectedPoint - internalPoint;
+                            if (turn == "white") distance = internalPoint - selectedPoint;
+                            else distance = selectedPoint - internalPoint;
                         }
                         
-                        if (DEBUG_MODE) {
-                            llOwnerSay("DEBUG: Calculating distance - from " + (string)selectedPoint + 
-                                      " to " + (string)internalPoint + 
-                                      ", turn: " + turn +
-                                      ", distance: " + (string)distance);
-                        }
-                    }
-                    
-                    integer die_value = 0;
-                    integer moves_used = 1;
-                    integer foundValidMove = FALSE;
-                    
-                    if (isDoubles) {
-                        integer dieValue = currentDie1;
-                        if (distance == dieValue) {
-                            die_value = dieValue;
-                            moves_used = 1;
-                            foundValidMove = TRUE;
-                        } else if (distance == dieValue * 2) {
-                            die_value = distance;
-                            moves_used = 2;
-                            foundValidMove = TRUE;
-                        } else if (distance == dieValue * 3) {
-                            die_value = distance;
-                            moves_used = 3;
-                            foundValidMove = TRUE;
-                        } else if (distance == dieValue * 4) {
-                            die_value = distance;
-                            moves_used = 4;
-                            foundValidMove = TRUE;
-                        }
-                    } else {
-                        if (currentDie1 > 0 && distance == currentDie1) {
-                            die_value = currentDie1;
-                            moves_used = 1;
-                            foundValidMove = TRUE;
-                        } else if (currentDie2 > 0 && distance == currentDie2) {
-                            die_value = currentDie2;
-                            moves_used = 1;
-                            foundValidMove = TRUE;
-                        } else if (distance == (currentDie1 + currentDie2) && currentDie1 > 0 && currentDie2 > 0) {
-                            die_value = currentDie1 + currentDie2;
-                            moves_used = 2;
-                            foundValidMove = TRUE;
-                        }
-                    }
-                    
-                    if (foundValidMove) {
-                        if (DEBUG_MODE) {
-                            llOwnerSay("DEBUG: Valid move found - distance: " + (string)distance + 
-                                      ", die_value: " + (string)die_value + 
-                                      ", moves_used: " + (string)moves_used);
+                        integer die_value = 0;
+                        integer moves_used = 1;
+                        
+                        // Find which die corresponds to this move
+                        if (isDoubles) {
+                            integer die = currentDie1; // All 4 are same
+                            if (distance == die) { die_value = die; moves_used = 1; }
+                            else if (distance == die * 2) { die_value = distance; moves_used = 2; }
+                            else if (distance == die * 3) { die_value = distance; moves_used = 3; }
+                            else if (distance == die * 4) { die_value = distance; moves_used = 4; }
+                            else {
+                                // Bear off case or other
+                                die_value = die;
+                                moves_used = 1; 
+                            }
+                        } else {
+                            if (currentDie1 > 0 && distance == currentDie1) {
+                                die_value = currentDie1;
+                            } else if (currentDie2 > 0 && distance == currentDie2) {
+                                die_value = currentDie2;
+                            } else if (currentDie1 > 0 && currentDie2 > 0 && distance == (currentDie1 + currentDie2)) {
+                                die_value = currentDie1 + currentDie2;
+                                moves_used = 2;
+                            } else {
+                                // Bear off mismatch or other
+                                if (currentDie1 >= distance && currentDie1 > 0) die_value = currentDie1;
+                                else if (currentDie2 >= distance && currentDie2 > 0) die_value = currentDie2;
+                            }
                         }
                         
                         llMessageLinked(LINK_SET, 0, "PLAYER_MOVE|" + turn + "|" + 
@@ -444,18 +521,208 @@ default {
                         }
                         
                         llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                        llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
                         pieceSelected = FALSE;
                         selectedPoint = -1;
                         selectedPlayer = NULL_KEY;
+                        validMoves = [];
                     } else {
-                        sendMessage("Invalid move distance " + (string)distance + 
-                                   ". Available dice: " + (string)currentDie1 + ", " + (string)currentDie2);
-                        if (DEBUG_MODE) {
-                            llOwnerSay("DEBUG: Invalid move - distance: " + (string)distance + 
-                                      ", currentDie1: " + (string)currentDie1 + 
-                                      ", currentDie2: " + (string)currentDie2 +
-                                      ", isDoubles: " + (string)isDoubles);
+                        sendMessage("Invalid move. Please select a marked destination.");
+                    }
+                } else {
+                    sendMessage("You can only move your own selected pieces.");
+                }
+                return;
+            }
+        }        
+        if ((llGetSubString(linkName, 0, 0) == "w" || llGetSubString(linkName, 0, 0) == "b") && 
+            llSubStringIndex(linkName, "die") == -1) {
+            
+            string player;
+            string pieceColor = llGetSubString(linkName, 0, 0);
+            
+            if (pieceColor == "w") player = "white";
+            else if (pieceColor == "b") player = "black";
+            else return;
+            
+            // FIRST ROLL: No piece selection allowed
+            if (gCurrentState == STATE_FIRST_ROLL) {
+                sendMessage("Please roll the dice first to determine who starts.");
+                return;
+            }
+            
+            // MAIN GAME: Normal turn and permission checks
+            if (player != turn) {
+                sendMessage("Not your turn.");
+                return;
+            }
+            
+            if (currentDie1 == 0 && currentDie2 == 0) {
+                sendMessage("You must roll the dice before moving pieces.");
+                return;
+            }
+            
+            if (!isPlayerAllowed(detLinkKey, player)) {
+                sendMessage("You can only select your own pieces.");
+                return;
+            }
+            
+            llMessageLinked(LINK_SET, 0, "GET_PIECE_POSITION|" + linkName + "|" + (string)detLinkKey, NULL_KEY);
+            return;
+        }
+        
+        if (linkName == "wdie1" || linkName == "wdie2" || linkName == "bdie1" || linkName == "bdie2") {
+            string player;
+            string dieColor = llGetSubString(linkName, 0, 0);
+            
+            if (dieColor == "w") player = "white";
+            }
+            else {
+                if (GetAgentLinkNumber(white) == 0) {
+                    llMessageLinked(LINK_ROOT, 0, "PLAYER_LEAVE|white", NULL_KEY);
+                    sendMessage("White player left the game.");
+                    white = NULL_KEY;
+                }
+                if (GetAgentLinkNumber(black) == 0) {
+                    llMessageLinked(LINK_ROOT, 0, "PLAYER_LEAVE|black", NULL_KEY);
+                    sendMessage("Black player left the game.");
+                    black = NULL_KEY;
+                }
+            }
+        }
+    }
+    
+    touch_start(integer total_number) {
+        // Debounce rapid clicks
+        float now = llGetTime();
+        if (now - gLastClickTime < CLICK_DEBOUNCE) {
+            return; // Ignore rapid clicks
+        }
+        gLastClickTime = now;
+        
+        // DEBUG: Show current state and turn
+        llOwnerSay("DEBUG: Touch detected - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");        
+        integer detLinkNumber = llDetectedLinkNumber(0);
+        key detLinkKey = llDetectedKey(0);
+        string linkName = llGetLinkName(detLinkNumber);
+        
+        llOwnerSay("DEBUG: Touched: " + linkName + ", Key: " + (string)detLinkKey);
+        
+        if (linkName == "MENU") {
+            llMessageLinked(LINK_SET, 0, "SHOW_MAIN_MENU|" + (string)detLinkKey, NULL_KEY);
+            return;
+        }
+        
+        if (linkName == "Backgammon") {
+            if (DEBUG_MODE) llOwnerSay("DEBUG: Board touched, checking pieceSelected state");
+            vector touchUV = llDetectedTouchUV(0);
+            integer internalPoint = findClosestPoint(touchUV);
+
+            if (DEBUG_MODE) {
+                llOwnerSay("DEBUG: Board touched at UV " + (string)touchUV + 
+                  ", internal point: " + (string)internalPoint +
+                  ", pieceSelected: " + (string)pieceSelected +
+                  ", selectedPoint: " + (string)selectedPoint);
+            }
+
+            if (DEBUG_MODE && pieceSelected) {
+                llOwnerSay("DEBUG: pieceSelected is TRUE - checking keys...");
+                llOwnerSay("DEBUG: detLinkKey: " + (string)detLinkKey);
+                llOwnerSay("DEBUG: selectedPlayer: " + (string)selectedPlayer);
+                llOwnerSay("DEBUG: Keys match: " + (string)(detLinkKey == selectedPlayer));
+                llOwnerSay("DEBUG: Current turn: " + turn);
+            }
+        
+            if (pieceSelected) {
+                // In simulation mode, allow the move regardless of selectedPlayer match
+                integer allowMove = FALSE;
+                if (UI_SIMULATING || (white == NULL_KEY && black == NULL_KEY)) {
+                    allowMove = TRUE; // Simulation mode - no specific player validation needed
+                    if (DEBUG_MODE) llOwnerSay("DEBUG: Simulation mode - move allowed without player key check");
+                } else {
+                    allowMove = (detLinkKey == selectedPlayer);
+                    if (DEBUG_MODE) llOwnerSay("DEBUG: Normal mode - player key match: " + (string)allowMove);
+                }
+                
+                if (allowMove) {
+                    if (DEBUG_MODE) {
+                        llOwnerSay("DEBUG: Entering pieceSelected move validation");
+                        llOwnerSay("DEBUG: selectedPoint: " + (string)selectedPoint + ", turn: " + turn);
+                        llOwnerSay("DEBUG: currentDie1: " + (string)currentDie1 + ", currentDie2: " + (string)currentDie2);
+                    }
+                    if (DEBUG_MODE) {
+                        llOwnerSay("DEBUG: Entering move validation - keys match!");
+                        llOwnerSay("DEBUG: Moving from " + (string)selectedPoint + " to " + (string)internalPoint);
+                    }
+                    
+                    // Check if the clicked point is a valid destination
+                    integer isValid = FALSE;
+                    integer destIndex = llListFindList(validMoves, [internalPoint]);
+                    
+                    if (destIndex != -1) {
+                        isValid = TRUE;
+                    }
+                    
+                    if (isValid) {
+                        // Calculate dice used for this move
+                        integer distance;
+                        if (selectedPoint == FROM_BAR) {
+                            if (turn == "white") distance = internalPoint + 1;
+                            else distance = 24 - internalPoint;
+                        } else {
+                            if (turn == "white") distance = internalPoint - selectedPoint;
+                            else distance = selectedPoint - internalPoint;
                         }
+                        
+                        integer die_value = 0;
+                        integer moves_used = 1;
+                        
+                        // Find which die corresponds to this move
+                        if (isDoubles) {
+                            integer die = currentDie1; // All 4 are same
+                            if (distance == die) { die_value = die; moves_used = 1; }
+                            else if (distance == die * 2) { die_value = distance; moves_used = 2; }
+                            else if (distance == die * 3) { die_value = distance; moves_used = 3; }
+                            else if (distance == die * 4) { die_value = distance; moves_used = 4; }
+                            else {
+                                // Bear off case or other
+                                die_value = die;
+                                moves_used = 1; 
+                            }
+                        } else {
+                            if (currentDie1 > 0 && distance == currentDie1) {
+                                die_value = currentDie1;
+                            } else if (currentDie2 > 0 && distance == currentDie2) {
+                                die_value = currentDie2;
+                            } else if (currentDie1 > 0 && currentDie2 > 0 && distance == (currentDie1 + currentDie2)) {
+                                die_value = currentDie1 + currentDie2;
+                                moves_used = 2;
+                            } else {
+                                // Bear off mismatch or other
+                                if (currentDie1 >= distance && currentDie1 > 0) die_value = currentDie1;
+                                else if (currentDie2 >= distance && currentDie2 > 0) die_value = currentDie2;
+                            }
+                        }
+                        
+                        llMessageLinked(LINK_SET, 0, "PLAYER_MOVE|" + turn + "|" + 
+                                       (string)selectedPoint + "|" + (string)internalPoint + 
+                                       "|" + (string)die_value + "|" + (string)moves_used, NULL_KEY);
+                        
+                        if (isDoubles) {
+                            movesLeft = movesLeft - moves_used;
+                            if (movesLeft > 0) {
+                                sendMessage("Move completed. " + (string)movesLeft + " moves remaining.");
+                            }
+                        }
+                        
+                        llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                        llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                        pieceSelected = FALSE;
+                        selectedPoint = -1;
+                        selectedPlayer = NULL_KEY;
+                        validMoves = [];
+                    } else {
+                        sendMessage("Invalid move. Please select a marked destination.");
                     }
                 } else {
                     sendMessage("You can only move your own selected pieces.");
@@ -514,9 +781,15 @@ default {
                 llOwnerSay("DEBUG: Allowing roll in reset/first_roll state");
                 if (isPlayerAllowed(detLinkKey, player)) {
                     integer die1 = 1 + (integer)llFrand(6);
-                    integer die2 = 1 + (integer)llFrand(6);
-                    // ANIMATE IMMEDIATELY + send to core only
-                    animateDiceRoll(player, die1, die2);
+                    integer die2 = 0;
+                    
+                    // Only roll second die if NOT in first roll state
+                    if (gCurrentState != STATE_FIRST_ROLL) {
+                        die2 = 1 + (integer)llFrand(6);
+                    }
+                    
+                    // Send to Render for animation + Core for logic
+                    llMessageLinked(LINK_SET, 0, "DICE_ROLL|" + player + "|" + (string)die1 + "|" + (string)die2, NULL_KEY);
                     llMessageLinked(LINK_SET, 0, "PLAYER_DICE_ROLL|" + player + "|" + (string)die1 + "|" + (string)die2, NULL_KEY);
                 }
                 return;
@@ -542,15 +815,15 @@ default {
             // Roll the dice
             integer die1 = 1 + (integer)llFrand(6);
             integer die2 = 1 + (integer)llFrand(6);
-            // ANIMATE IMMEDIATELY + send to core only  
-            animateDiceRoll(player, die1, die2);
+            // Send to Render for animation + Core for logic
+            llMessageLinked(LINK_SET, 0, "DICE_ROLL|" + player + "|" + (string)die1 + "|" + (string)die2, NULL_KEY);
             llMessageLinked(LINK_SET, 0, "PLAYER_DICE_ROLL|" + player + "|" + (string)die1 + "|" + (string)die2, NULL_KEY);
             return;
         }
     }
     
     link_message(integer sender_num, integer num, string str, key id) {
-        list params = llParseString2List(str, ["|"], []);
+        list params = llParseStringKeepNulls(str, ["|"], []);
         string command = llList2String(params, 0);
         
         // === CONTROL STATE from Menu ===
@@ -586,13 +859,7 @@ default {
             currentDie2 = llList2Integer(params, 3);
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
-            if (turn == "white") {
-                setDieOrientation("wdie1", currentDie1);
-                setDieOrientation("wdie2", currentDie2);
-            } else {
-                setDieOrientation("bdie1", currentDie1);
-                setDieOrientation("bdie2", currentDie2);
-            }
+            // Dice orientation handled by Render now
             
             sendMessage(turn + " wins the first roll and will play first with " + 
                         (string)currentDie1 + " and " + (string)currentDie2);
@@ -609,7 +876,12 @@ default {
             string player = llList2String(params, 1);
             currentDie1 = llList2Integer(params, 2);
             currentDie2 = llList2Integer(params, 3);
-            sendMessage(player + " rolled " + (string)currentDie1 + " and " + (string)currentDie2);
+            
+            if (currentDie2 == 0) {
+                sendMessage(player + " rolled " + (string)currentDie1);
+            } else {
+                sendMessage(player + " rolled " + (string)currentDie1 + " and " + (string)currentDie2);
+            }
         }
         else if (command == "TURN_CHANGE") {
             gCurrentState = STATE_MAIN_GAME;
@@ -624,11 +896,7 @@ default {
             selectedPoint = -1;
             selectedPlayer = NULL_KEY;
             
-            // Reset all dice to 1 visually
-            setDieOrientation("wdie1", 1);
-            setDieOrientation("wdie2", 1);
-            setDieOrientation("bdie1", 1);
-            setDieOrientation("bdie2", 1);
+            // Dice reset handled by Render
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
             
@@ -702,7 +970,12 @@ default {
                 
                 pieceSelected = TRUE;
                 selectedPoint = FROM_BAR;
-                sendMessage("Piece is on the bar. Select a destination point to enter the board.");
+                
+                // Request valid moves from Core for BAR piece
+                llMessageLinked(LINK_SET, 0, "REQUEST_VALID_MOVES|" + (string)FROM_BAR + "|" + turn, NULL_KEY);
+                 if (DEBUG_MODE) {
+                    llOwnerSay("DEBUG UI: Bar piece selected - Requesting valid moves");
+                }
             } else if(position == -1) {
                 sendMessage("Piece not found on board.");
                 return;
@@ -711,8 +984,6 @@ default {
                 integer color;
                 if (turn == "white") color = 0;
                 else color = 1;
-                
-                llMessageLinked(LINK_SET, 0, "SHOW_MARKER|1|" + (string)color + "|" + (string)position, NULL_KEY);
                 
                 // Same player key handling for simulation mode
                 if (UI_SIMULATING || (white == NULL_KEY && black == NULL_KEY)) {
@@ -728,10 +999,58 @@ default {
                 pieceSelected = TRUE;
                 selectedPoint = position;
                 
+                // Request valid moves from Core
+                llMessageLinked(LINK_SET, 0, "REQUEST_VALID_MOVES|" + (string)position + "|" + turn, NULL_KEY);
+                
                 if (DEBUG_MODE) {
                     llOwnerSay("DEBUG UI: Piece selected at position " + (string)position + 
-                              ", selectedPlayer: " + (string)selectedPlayer);
+                              ", selectedPlayer: " + (string)selectedPlayer + 
+                              " - Requesting valid moves");
                 }
+            }
+        }
+        else if (command == "VALID_MOVES") {
+            integer sourcePoint = llList2Integer(params, 1);
+            string moveData = llList2String(params, 2);
+            
+            if (moveData == "BAR_ONLY") {
+                sendMessage("You have pieces on the bar. You must move them first.");
+                pieceSelected = FALSE;
+                selectedPoint = -1;
+                selectedPlayer = NULL_KEY;
+                return;
+            }
+            
+            validMoves = [];
+            if (moveData != "") {
+                list moves = llParseString2List(moveData, [","], []);
+                integer i;
+                for(i=0; i<llGetListLength(moves); i++) {
+                    validMoves += (integer)llList2String(moves, i);
+                }
+            }
+            
+            if (llGetListLength(validMoves) == 0) {
+                sendMessage("No valid moves for this piece.");
+                pieceSelected = FALSE;
+                selectedPoint = -1;
+                selectedPlayer = NULL_KEY;
+            } else {
+                // Show markers
+                integer color = 0;
+                if (turn == "black") color = 1;
+                
+                // Show marker for source piece
+                llMessageLinked(LINK_SET, 0, "SHOW_MARKER|1|" + (string)color + "|" + (string)sourcePoint, NULL_KEY);
+                
+                llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                
+                if (llGetListLength(validMoves) > 0) {
+                    integer dest1 = llList2Integer(validMoves, 0);
+                    llMessageLinked(LINK_SET, 0, "SHOW_MARKER|2|" + (string)color + "|" + (string)dest1, NULL_KEY);
+                }
+                
+                sendMessage("Select a marked destination.");
             }
         }
         else if (command == "DOUBLES_ROLLED") {
@@ -749,18 +1068,17 @@ default {
             integer die1 = llList2Integer(params, 2);
             integer die2 = llList2Integer(params, 3);
             
-            // Only animate for AI rolls, not manual rolls
-            if ((player == "white" && white == NULL_KEY) || (player == "black" && black == NULL_KEY)) {
-                // This is an AI roll - animate it
-                animateDiceRoll(player, die1, die2);
-            }
-            // Manual rolls are already animated, so skip animation here
+            // Animation handled by Render now
             
             // Update current dice values
             currentDie1 = die1;
             currentDie2 = die2;
             
-            sendMessage(player + " rolled " + (string)die1 + " and " + (string)die2);
+            if (die2 == 0) {
+                sendMessage(player + " rolled " + (string)die1);
+            } else {
+                sendMessage(player + " rolled " + (string)die1 + " and " + (string)die2);
+            }
         }
     }
 }

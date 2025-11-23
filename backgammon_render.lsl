@@ -120,6 +120,37 @@ rotateDieToValue(string dieName, integer value) {
     }
 }
 
+// Animation function ported from UI
+animateDieRoll(string name, integer finalValue) {
+    integer n = GetLinkNumber(name);
+    if (n == 0) return;
+    
+    llSetLinkPrimitiveParamsFast(n, [
+        PRIM_OMEGA, <1, 1, 1>, PI, 1.0
+    ]);
+    
+    integer i;
+    for(i = 0; i < 8; i = i + 1) {
+        integer tempValue = (integer)llFrand(6) + 1;
+        rotation tempRot = llList2Rot(faceRotations, tempValue - 1);
+        llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, tempRot]);
+        llSleep(0.1);
+    }
+    
+    llSetLinkPrimitiveParamsFast(n, [PRIM_OMEGA, <0, 0, 0>, 0, 0]);
+    rotateDieToValue(name, finalValue);
+}
+
+animateDiceRoll(string player, integer die1, integer die2) {
+    if (player == "white") {
+        if (die1 > 0) animateDieRoll("wdie1", die1);
+        if (die2 > 0) animateDieRoll("wdie2", die2);
+    } else {
+        if (die1 > 0) animateDieRoll("bdie1", die1);
+        if (die2 > 0) animateDieRoll("bdie2", die2);
+    }
+}
+
 vector ScaledFromUV(vector UV) {
     // takes UV coordinates (which range from 0 to 1) and converts them to local object coordinates by:
     //    Scaling the X and Y values by the object's dimensions
@@ -265,7 +296,7 @@ Arrange(integer color, integer position) {
             vector localPos = ScaledFromUV(uvCoords);
             
             // Position the piece
-            llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POS_LOCAL, localPos]);
+            llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos]);
         }
     }
 }

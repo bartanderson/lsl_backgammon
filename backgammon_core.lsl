@@ -44,6 +44,10 @@ list BlackBarList = [];
 list WhiteBorneOff = [];
 list BlackBorneOff = [];
 
+// Move deduplication
+list gRecentMoveIDs = [];
+integer MAX_MOVE_HISTORY = 10;
+
 // CONTROL STATE from Menu
 integer CORE_WHITE_AI = FALSE;
 integer CORE_BLACK_AI = FALSE;
@@ -70,6 +74,8 @@ string MoveStone(integer from_point, integer to_point, integer color) {
     string fromPointContents = llList2String(BoardList, from_point);
     string toPointContents = llList2String(BoardList, to_point);
     
+    if (DEBUG_MODE) llOwnerSay("DEBUG CORE: MoveStone " + (string)from_point + "->" + (string)to_point + " Content: '" + fromPointContents + "'");
+
     string playerColor = "w";
     if (color == 1) playerColor = "b";
     
@@ -88,14 +94,20 @@ string MoveStone(integer from_point, integer to_point, integer color) {
         i++;
     }
     
-    if (pieceToMove == "") return "";
+    if (pieceToMove == "") {
+        if (DEBUG_MODE) llOwnerSay("DEBUG CORE: No piece found for color " + playerColor);
+        return "";
+    }
     
     // Remove from source
     integer pieceIndex = llListFindList(fromPieces, [pieceToMove]);
+    if (DEBUG_MODE) llOwnerSay("DEBUG CORE: Found piece " + pieceToMove + " at index " + (string)pieceIndex);
+
     if (pieceIndex != -1) {
         fromPieces = llDeleteSubList(fromPieces, pieceIndex, pieceIndex);
     }
     string newFromContents = llDumpList2String(fromPieces, ",");
+    if (DEBUG_MODE) llOwnerSay("DEBUG CORE: New From Content: '" + newFromContents + "'");
     
     list toPieces = llParseString2List(toPointContents, [","], []);
     string opponentColor = "b";
@@ -140,6 +152,11 @@ string MoveStone(integer from_point, integer to_point, integer color) {
     
     BoardList = llListReplaceList(BoardList, [newFromContents], from_point, from_point);
     BoardList = llListReplaceList(BoardList, [newToContents], to_point, to_point);
+    
+    if (DEBUG_MODE) {
+        string checkFrom = llList2String(BoardList, from_point);
+        llOwnerSay("DEBUG CORE: Verify Update - Point " + (string)from_point + " is now: '" + checkFrom + "'");
+    }
     
     return pieceToMove;
 }
@@ -269,6 +286,77 @@ integer isValidBearOff(integer from_point, integer die_value, integer color) {
     }
     
     return TRUE;
+}
+
+integer mustBearOff(integer color) {
+    return allPiecesInHomeBoard(color);
+}
+
+list calculateValidMoves(integer fromPoint, integer color) {
+    list moves = [];
+    
+    // Check if we MUST bear off (all pieces in home board)
+    // If so, we can ONLY bear off or move within home board
+    integer bearingOff = mustBearOff(color);
+    
+    integer direction = 1;
+    if (color == 1) direction = -1; // Black moves down
+    
+    list diceToCheck = [];
+    if (u1 > 0) diceToCheck += u1;
+    if (u2 > 0) diceToCheck += u2;
+    if (isDoubles && movesLeft > 0) {
+        // If doubles, we can use the die value up to movesLeft times
+        // But for marker display, we just need to know unique reachable points
+        diceToCheck = [u1]; 
+        if (movesLeft >= 2) diceToCheck += (u1 * 2);
+        if (movesLeft >= 3) diceToCheck += (u1 * 3);
+        if (movesLeft >= 4) diceToCheck += (u1 * 4);
+    } else if (u1 > 0 && u2 > 0) {
+        // Combined move
+        diceToCheck += (u1 + u2);
+    }
+    
+    integer i;
+    for(i = 0; i < llGetListLength(diceToCheck); i++) {
+        integer die = llList2Integer(diceToCheck, i);
+        integer toPoint = fromPoint + (die * direction);
+        
+        if (toPoint < 0 || toPoint >= BOARD_SIZE) {
+            // Potential Bear Off
+            if (bearingOff && isValidBearOff(fromPoint, die, color)) {
+                if (llListFindList(moves, [BEAR_OFF]) == -1) {
+                    moves += BEAR_OFF;
+                }
+            }
+        } else {
+            // Normal Move
+            // Check if destination is blocked
+            string destContent = llList2String(BoardList, toPoint);
+            integer blocked = FALSE;
+            if (destContent != "") {
+                string oppColor = "b";
+                if (color == 1) oppColor = "w";
+                
+                // Count opponent pieces
+                list pieces = llParseString2List(destContent, [","], []);
+                integer oppCount = 0;
+                integer j;
+                for(j=0; j<llGetListLength(pieces); j++) {
+                    if (llGetSubString(llList2String(pieces, j), 0, 0) == oppColor) oppCount++;
+                }
+                if (oppCount >= 2) blocked = TRUE;
+            }
+            
+            if (!blocked) {
+                if (llListFindList(moves, [toPoint]) == -1) {
+                    moves += toPoint;
+                }
+            }
+        }
+    }
+    
+    return moves;
 }
 
 string BearOffStone(integer from_point, integer color) {
@@ -457,7 +545,14 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
     sendBarStateToRender();
     llSleep(2);
 
-    // Win check removed from here - now only checked at turn completion (line 487)
+    // Win check - IMMEDIATE
+    if (isGameOver()) {
+        gCurrentState = STATE_GAME_OVER;
+        string winner = "white";
+        if (llGetListLength(BlackBorneOff) >= 15) winner = "black";
+        llMessageLinked(LINK_SET, 0, "GAME_OVER|" + winner, NULL_KEY);
+        return;
+    }
     
     if (!isDoubles) {
         if (movesUsed == 2) {
@@ -594,11 +689,11 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
     if (whiteDie > blackDie) {
         turn = "white";
         u1 = whiteDie1;
-        u2 = whiteDie2;  // FIX: Use winner's second die
+        u2 = blackDie1; // Winner uses their die + loser's die
     } else {
         turn = "black";
         u1 = blackDie1;
-        u2 = blackDie2;  // FIX: Use winner's second die
+        u2 = whiteDie1; // Winner uses their die + loser's die
     }
     
     gCurrentState = STATE_MAIN_GAME;
@@ -633,9 +728,9 @@ default {
                 if (white == NULL_KEY && black == NULL_KEY) {
                     llSleep(2.0);
                     whiteDie1 = 1 + (integer)llFrand(6);
-                    whiteDie2 = 1 + (integer)llFrand(6);
+                    whiteDie2 = 0; // First roll is one die only
                     blackDie1 = 1 + (integer)llFrand(6);
-                    blackDie2 = 1 + (integer)llFrand(6);
+                    blackDie2 = 0; // First roll is one die only
                     
                     llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
                     llSleep(1.0);
@@ -707,8 +802,26 @@ default {
             integer to_point = llList2Integer(params, 3);
             integer die_value = llList2Integer(params, 4);
             integer movesUsed = llList2Integer(params, 5);
+            string moveID = llList2String(params, 6);
+            
+            // DEDUPLICATION: Check if we've seen this move ID
+            if (llListFindList(gRecentMoveIDs, [moveID]) != -1) {
+                if (DEBUG_MODE) llOwnerSay("CORE: Ignoring duplicate move ID: " + moveID);
+                return;
+            }
+            
+            // Track this move ID
+            gRecentMoveIDs = [moveID] + gRecentMoveIDs;
+            if (llGetListLength(gRecentMoveIDs) > MAX_MOVE_HISTORY) {
+                gRecentMoveIDs = llList2List(gRecentMoveIDs, 0, MAX_MOVE_HISTORY - 1);
+            }
+            
+            if (DEBUG_MODE) llOwnerSay("CORE: Processing Move ID: " + moveID);
             
             processMove(from_point, to_point, die_value, movesUsed);
+            
+            // ACKNOWLEDGE the move to AI
+            llMessageLinked(LINK_SET, 0, "MOVE_ACKNOWLEDGED|" + moveID, NULL_KEY);
         }
         else if (command == "RESET_GAME") {
             gCurrentState = STATE_RESET;
@@ -737,7 +850,55 @@ default {
             message += "|" + llDumpList2String(BlackBarList, ",");
             message += "|" + llDumpList2String(WhiteBorneOff, ",");
             message += "|" + llDumpList2String(BlackBorneOff, ",");
+            message += "|CORE_SIG_" + (string)llGetUnixTime();
             llMessageLinked(LINK_SET, 0, message, NULL_KEY);
+        }
+        else if (command == "TRIGGER_AI_NOW") {
+            if (DEBUG_MODE) llOwnerSay("CORE: Received manual AI trigger request");
+            triggerAIIfNeeded();
+        }
+        else if (command == "AI_NO_MOVES") {
+            string player = llList2String(params, 1);
+            if (player == turn) {
+                if (DEBUG_MODE) llOwnerSay("CORE: AI has no moves - passing turn");
+                
+                // Pass turn
+                if (turn == "white") turn = "black";
+                else turn = "white";
+                
+                u1 = 0;
+                u2 = 0;
+                whiteOnce = FALSE;
+                blackOnce = FALSE;
+                isDoubles = FALSE;
+                movesLeft = 0;
+
+                llMessageLinked(LINK_SET, 0, "TURN_CHANGE|" + turn, NULL_KEY);
+                llSleep(2.0);
+                triggerAIIfNeeded();
+            }
+        }
+        else if (command == "REQUEST_VALID_MOVES") {
+            integer point = llList2Integer(params, 1);
+            string player = llList2String(params, 2);
+            
+            integer color = 0;
+            if (player == "black") color = 1;
+            
+            // Check if player has pieces on bar
+            if (color == 0 && llGetListLength(WhiteBarList) > 0 && point != FROM_BAR) {
+                // Must move from bar first
+                llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
+                return;
+            }
+            if (color == 1 && llGetListLength(BlackBarList) > 0 && point != FROM_BAR) {
+                llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
+                return;
+            }
+            
+            list moves = calculateValidMoves(point, color);
+            string moveStr = llDumpList2String(moves, ",");
+            llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|" + moveStr, NULL_KEY);
         }
         else if (command == "AI_NO_MOVES") {
             string player = llList2String(params, 1);
