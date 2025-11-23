@@ -75,9 +75,17 @@ integer isPlayerAllowed(key avatar, string requestedColor) {
     if (requestedColor == "white") {
         return (avatar == white);
     } else if (requestedColor == "black") {
-        return (avatar == black);
+            vector main = llList2Vector(llGetLinkPrimitiveParams(GetLinkNumber("Backgammon"), [PRIM_POSITION]), 0);
+            vector someplayer = llList2Vector(llGetLinkPrimitiveParams(i, [PRIM_POSITION]), 0);
+            
+            if(someplayer.y - main.y > .5) {
+                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)llGetLinkKey(i), NULL_KEY);
+            }
+            else if(someplayer.y - main.y < -.5) {
+                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)llGetLinkKey(i), NULL_KEY);
+            }
+        }
     }
-    return FALSE;
 }
 
 integer GetAgentLinkNumber(key avatar) {
@@ -146,7 +154,6 @@ integer findClosestPoint(vector touchUV) {
     return closestPoint;
 }
 
-
 resetUIState() {
     gCurrentState = STATE_RESET;
     turn = "";
@@ -166,12 +173,6 @@ resetUIState() {
     setDieOrientation("wdie1", 1);
     setDieOrientation("wdie2", 1);
     setDieOrientation("bdie1", 1);
-    setDieOrientation("bdie2", 1);
-    
-    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
-    llOwnerSay("DEBUG: UI Reset Complete - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");
-}
-
 default {
     state_entry() {
         // Dice setup moved to Render
