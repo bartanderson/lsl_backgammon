@@ -1,0 +1,29 @@
+# LSL Backgammon Project - Agent Instructions
+
+## MANDATORY FIRST ACTIONS
+When starting work on this project:
+
+1. **Check current task status**: Read `C:\Users\bartl\.gemini\antigravity\brain\f1d3e325-a9e4-4e36-87aa-957e1fa04233\task.md`
+
+2. **Review critical guidelines**: Read `DEVELOPMENT_GUIDELINES.md` 
+   - Files >300 lines: MUST use `write_to_file` or `.agent/tools/safe_edit.py`
+   - NEVER use `replace_file_content` on files >300 lines
+
+3. **Verify tools exist**: 
+   - Check `.agent/tools/safe_edit.py` exists
+   - If missing: `git checkout HEAD -- .agent/tools/safe_edit.py`
+
+4. **Check recent commits**: `git log --oneline -5`
+
+## Critical LSL-Specific Rules
+- Use `llParseStringKeepNulls` NOT `llParseString2List` (latter strips empty strings)
+
+## File Editing Workflow
+BEFORE editing ANY file:
+1. Check line count with `view_file`
+2. If >300 lines: Use `write_to_file` or `safe_edit.py`
+3. After edit: Commit immediately to git
+
+## Available Tools
+- `.agent/tools/safe_edit.py` - Safe file editor with backups
+  Usage: `python .agent/tools/safe_edit.py <file> <start> <end> <replacement_file>`
