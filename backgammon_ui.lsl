@@ -146,6 +146,7 @@ integer findClosestPoint(vector touchUV) {
     return closestPoint;
 }
 
+
 resetUIState() {
     gCurrentState = STATE_RESET;
     turn = "";
@@ -165,6 +166,12 @@ resetUIState() {
     setDieOrientation("wdie1", 1);
     setDieOrientation("wdie2", 1);
     setDieOrientation("bdie1", 1);
+    setDieOrientation("bdie2", 1);
+    
+    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+    llOwnerSay("DEBUG: UI Reset Complete - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");
+}
+
 default {
     state_entry() {
         // Dice setup moved to Render
