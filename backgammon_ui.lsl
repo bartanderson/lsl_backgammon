@@ -75,17 +75,10 @@ integer isPlayerAllowed(key avatar, string requestedColor) {
     if (requestedColor == "white") {
         return (avatar == white);
     } else if (requestedColor == "black") {
-            vector main = llList2Vector(llGetLinkPrimitiveParams(GetLinkNumber("Backgammon"), [PRIM_POSITION]), 0);
-            vector someplayer = llList2Vector(llGetLinkPrimitiveParams(i, [PRIM_POSITION]), 0);
-            
-            if(someplayer.y - main.y > .5) {
-                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)llGetLinkKey(i), NULL_KEY);
-            }
-            else if(someplayer.y - main.y < -.5) {
-                llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)llGetLinkKey(i), NULL_KEY);
-            }
-        }
+        return (avatar == black);
     }
+    
+    return FALSE;
 }
 
 integer GetAgentLinkNumber(key avatar) {
