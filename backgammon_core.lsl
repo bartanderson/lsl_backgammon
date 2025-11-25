@@ -710,7 +710,7 @@ default {
     }
     
     link_message(integer sender, integer num, string str, key id) {
-        list params = llParseString2List(str, ["|"], []);
+        list params = llParseStringKeepNulls(str, ["|"], []);
         string command = llList2String(params, 0);
         
         if (command == "CONTROL_STATE") {

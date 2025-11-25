@@ -665,7 +665,7 @@ default {
     }
     
     link_message(integer sender_num, integer num, string str, key id) {
-        list params = llParseString2List(str, ["|"], []);
+        list params = llParseStringKeepNulls(str, ["|"], []);
         string command = llList2String(params, 0);
         
         // === CONTROL STATE from Menu ===
