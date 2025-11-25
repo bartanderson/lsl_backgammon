@@ -160,6 +160,20 @@ resetUIState() {
     validMoves = [];
     
     white = NULL_KEY;
+    black = NULL_KEY;
+    simulating = FALSE;
+    
+    // Dice orientation handled by Render now
+}
+
+default {
+    state_entry() {
+        // Dice setup moved to Render
+        
+        initPointUVs();
+    }
+        if (change & CHANGED_LINK) {
+            key av = llAvatarOnSitTarget();
             if (av != NULL_KEY) {
                 integer linkNum = GetAgentLinkNumber(av);
                 string linkName = llGetLinkName(linkNum);
