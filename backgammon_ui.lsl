@@ -486,30 +486,6 @@ default {
             sendMessage(message);
         }
         else if (command == "DICE_VALUES") {
-            currentDie1 = llList2Integer(params, 1);
-            currentDie2 = llList2Integer(params, 2);
-            // Forward to Render to update dice display
-            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
-        }
-        else if (command == "DICE_RESULT") {
-            string player = llList2String(params, 1);
-            currentDie1 = llList2Integer(params, 2);
-            currentDie2 = llList2Integer(params, 3);
-            
-            // Forward to Render to update dice display
-            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + player + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
-            
-            if (currentDie2 == 0) {
-                sendMessage(player + " rolled " + (string)currentDie1);
-            } else {
-                sendMessage(player + " rolled " + (string)currentDie1 + " and " + (string)currentDie2);
-            }
-        }
-        else if (command == "TURN_CHANGE") {
-            gCurrentState = STATE_MAIN_GAME;
-            turn = llList2String(params, 1);
-            currentDie1 = 0;
-            currentDie2 = 0;
             isDoubles = FALSE;
             movesLeft = 0;
             
