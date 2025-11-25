@@ -160,23 +160,6 @@ resetUIState() {
     validMoves = [];
     
     white = NULL_KEY;
-    black = NULL_KEY;
-    simulating = FALSE;
-    
-    setDieOrientation("wdie1", 1);
-    setDieOrientation("wdie2", 1);
-    setDieOrientation("bdie1", 1);
-default {
-    state_entry() {
-        // Dice setup moved to Render
-        
-        ResetSeatedPlayers();
-        initPointUVs();
-    }
-    
-    changed(integer change) {
-        if (change & CHANGED_LINK) {
-            key av = llAvatarOnSitTarget();
             if (av != NULL_KEY) {
                 integer linkNum = GetAgentLinkNumber(av);
                 string linkName = llGetLinkName(linkNum);
