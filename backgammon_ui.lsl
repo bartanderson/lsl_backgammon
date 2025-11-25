@@ -475,7 +475,8 @@ default {
             currentDie2 = llList2Integer(params, 3);
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
-            // Dice orientation handled by Render now
+            // Send dice values to Render for display
+            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
             
             sendMessage(turn + " wins the first roll and will play first with " + 
                         (string)currentDie1 + " and " + (string)currentDie2);
@@ -487,11 +488,16 @@ default {
         else if (command == "DICE_VALUES") {
             currentDie1 = llList2Integer(params, 1);
             currentDie2 = llList2Integer(params, 2);
+            // Forward to Render to update dice display
+            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
         }
         else if (command == "DICE_RESULT") {
             string player = llList2String(params, 1);
             currentDie1 = llList2Integer(params, 2);
             currentDie2 = llList2Integer(params, 3);
+            
+            // Forward to Render to update dice display
+            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + player + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
             
             if (currentDie2 == 0) {
                 sendMessage(player + " rolled " + (string)currentDie1);
