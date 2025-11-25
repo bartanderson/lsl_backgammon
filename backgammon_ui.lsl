@@ -172,6 +172,8 @@ default {
         
         initPointUVs();
     }
+    
+    changed(integer change) {
         if (change & CHANGED_LINK) {
             key av = llAvatarOnSitTarget();
             if (av != NULL_KEY) {
