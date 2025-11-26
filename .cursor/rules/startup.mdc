@@ -1,0 +1,30 @@
+# LSL Backgammon Project Startup
+
+## Automatic Initialization
+
+When starting work on this project, you MUST automatically run the `/initialize` workflow as your first action.
+
+The `/initialize` workflow is located at `.agent/workflows/initialize.md` and performs the following critical steps:
+
+1. Check current task status in `task.md`
+2. Verify safe editing tools exist in `.agent/tools/`
+3. Check git status
+4. Review project-specific LSL rules
+
+## Critical Project Rules
+
+### File Editing
+- **Files >300 lines**: MUST use `write_to_file` or Python tools in `.agent/tools/`
+- **NEVER** use `replace_file_content` or `multi_replace_file_content` on large files
+- Always check line count with `view_file` before editing
+
+### LSL-Specific Rules
+- Use `llParseStringKeepNulls` NOT `llParseString2List` (latter strips empty strings)
+
+### Git Workflow
+- Commit immediately after successful edits
+- Use descriptive commit messages
+
+## Workflow Execution
+
+**IMPORTANT**: Execute the `/initialize` workflow automatically when you first receive a message in this project. Do not wait for the user to request it.
