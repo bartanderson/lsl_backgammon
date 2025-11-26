@@ -1,0 +1,8 @@
+    // Normal mode: check against stored player keys
+    if (requestedColor == "white") {
+        return (avatar == white);
+    } else if (requestedColor == "black") {
+        return (avatar == black);
+    }
+    return FALSE;
+}

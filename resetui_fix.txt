@@ -1,0 +1,27 @@
+
+resetUIState() {
+    gCurrentState = STATE_RESET;
+    turn = "";
+    currentDie1 = 0;
+    currentDie2 = 0;
+    isDoubles = FALSE;
+    movesLeft = 0;
+    pieceSelected = FALSE;
+    selectedPoint = -1;
+    selectedPlayer = NULL_KEY;
+    validMoves = [];
+    
+    white = NULL_KEY;
+    black = NULL_KEY;
+    simulating = FALSE;
+    
+    setDieOrientation("wdie1", 1);
+    setDieOrientation("wdie2", 1);
+    setDieOrientation("bdie1", 1);
+    setDieOrientation("bdie2", 1);
+    
+    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+    llOwnerSay("DEBUG: UI Reset Complete - State: " + (string)gCurrentState + ", Turn: '" + turn + "'");
+}
+
+default {
