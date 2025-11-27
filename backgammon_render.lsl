@@ -246,6 +246,29 @@ integer GetLinkNumber(string linkName) {
     return 0;
 }
 
+updateLocalBoard(string piece, integer from_point, integer to_point) {
+    // Remove from source point
+    if (from_point >= 0 && from_point < 24) {
+        string pointStr = llList2String(BoardList, from_point);
+        list pieces = llParseString2List(pointStr, [","], []);
+        integer idx = llListFindList(pieces, [piece]);
+        if (idx != -1) {
+            pieces = llDeleteSubList(pieces, idx, idx);
+            BoardList = llListReplaceList(BoardList, [llDumpList2String(pieces, ",")], from_point, from_point);
+            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: updateLocalBoard removed " + piece + " from point " + (string)from_point);
+        }
+    }
+    
+    // Add to destination point (only if not bearing off)
+    if (to_point >= 0 && to_point < 24) {
+        string pointStr = llList2String(BoardList, to_point);
+        if (pointStr == "") pointStr = piece;
+        else pointStr += "," + piece;
+        BoardList = llListReplaceList(BoardList, [pointStr], to_point, to_point);
+        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: updateLocalBoard added " + piece + " to point " + (string)to_point);
+    }
+}
+
 Arrange(integer color, integer position) {
     // Determine points list, vertical list, and horizontal position
     string points;
@@ -389,21 +412,26 @@ default {
         
         if (command == "BOARD_STATE") {
             integer len = llGetListLength(params);
-            //remove me -
+            
+            // Count actual pieces on board (not just points)
             integer whiteOnBoard = 0;
             integer blackOnBoard = 0;
             integer i;
             for (i = 0; i < 24; i++) {
                 string point = llList2String(BoardList, i);
                 if (point != "") {
-                    if (llSubStringIndex(point, "w") != -1) whiteOnBoard++;
-                    if (llSubStringIndex(point, "b") != -1) blackOnBoard++;
+                    list pieces = llParseString2List(point, [","], []);
+                    integer j;
+                    for (j = 0; j < llGetListLength(pieces); j++) {
+                        string piece = llList2String(pieces, j);
+                        if (llGetSubString(piece, 0, 0) == "w") whiteOnBoard++;
+                        else if (llGetSubString(piece, 0, 0) == "b") blackOnBoard++;
+                    }
                 }
             }
             llOwnerSay("DEBUG RENDER: BOARD_STATE received - " +
                        "WhiteOnBoard: " + (string)whiteOnBoard +
                        " BlackOnBoard: " + (string)blackOnBoard);
-            //- when fix is done
             
             if (DEBUG_MODE_VERBOSE) llOwnerSay("DEBUG: Received BOARD_STATE message: " + str + (string)(len));
             
@@ -502,6 +530,9 @@ default {
                 llOwnerSay("DEBUG RENDER: MOVE_PIECE - " + piece + " from " + (string)from_point + " to " + (string)to_point);
             }
             
+            // Update local BoardList immediately
+            updateLocalBoard(piece, from_point, to_point);
+            
             integer color;
             if(llGetSubString(piece, 0, 0) == "w") color = 0;
             else color = 1;
@@ -561,14 +592,14 @@ default {
                 if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
             }
             
-            // DO NOT call Arrange here - let BOARD_STATE handle the piece positioning
-            // The bar lists are now updated for when BOARD_STATE processes the bar positions
-        }
         else if(command == "BEAR_OFF_PIECE") {
             string piece = llList2String(params, 1);
             integer from_point = llList2Integer(params, 2);
             
             if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Bear off piece " + piece + " from " + (string)from_point);
+            
+            // Update local BoardList immediately (to_point = -1 for bear-off)
+            updateLocalBoard(piece, from_point, -1);
             
             // HIDE THE PIECE
             integer linkNum = GetLinkNumber(piece);
@@ -580,6 +611,9 @@ default {
             integer color;
             if(llGetSubString(piece, 0, 0) == "w") color = 0;
             else color = 1;
+            
+            Arrange(color, from_point);
+        }
             
             Arrange(color, from_point);
         }
