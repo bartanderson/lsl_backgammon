@@ -456,18 +456,17 @@ default {
         else if (command == "SET_PLAYER_KEYS") {
             white = (key)llList2String(params, 1);
             black = (key)llList2String(params, 2);
-        else if (command == "FIRST_TURN") {
-            gCurrentState = STATE_MAIN_GAME;
-            turn = llList2String(params, 1);
-            currentDie1 = llList2Integer(params, 2);
-            currentDie2 = llList2Integer(params, 3);
-            
-            llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
-            // Send dice values to Render for display
-            llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)currentDie1 + "|" + (string)currentDie2, NULL_KEY);
-            
-            sendMessage(turn + " wins the first roll and will play first with " + 
-                        (string)currentDie1 + " and " + (string)currentDie2);
+        }
+        else if (command == "GAME_READY") {
+            sendMessage("Backgammon game ready. Please sit at white and black positions.");
+        }
+        else if (command == "START_FIRST_ROLL") {
+            gCurrentState = STATE_FIRST_ROLL;
+            llMessageLinked(LINK_SET, 0, "POSITION_DICE_FIRST_ROLL", NULL_KEY);
+            sendMessage("Both players seated. Please click your dice to roll for first turn.");
+        }
+        else if (command == "REROLL_FIRST") {
+            sendMessage("Roll again, tied values.");
         }
         else if (command == "FIRST_TURN") {
             gCurrentState = STATE_MAIN_GAME;
@@ -486,7 +485,7 @@ default {
             string message = llList2String(params, 1);
             sendMessage(message);
         }
-        else if (command == "DICE_VALUES") {
+        else if (command == "DICE_RESULT") {
             isDoubles = FALSE;
             movesLeft = 0;
             
@@ -499,7 +498,6 @@ default {
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
             
-            sendMessage("Turn changed to: " + turn);
         }
         else if (command == "INVALID_MOVE") {
             string player = llList2String(params, 1);
@@ -678,6 +676,20 @@ default {
             } else {
                 sendMessage(player + " rolled " + (string)die1 + " and " + (string)die2);
             }
+        }
+        else if (command == "TURN_CHANGE") {
+            turn = llList2String(params, 1);
+            sendMessage("Turn changed to: " + turn);
+            
+            // Reset state for new turn
+            isDoubles = FALSE;
+            movesLeft = 0;
+            pieceSelected = FALSE;
+            selectedPoint = -1;
+            selectedPlayer = NULL_KEY;
+            validMoves = [];
+            
+            llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
         }
     }
 }

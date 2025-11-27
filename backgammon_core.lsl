@@ -381,6 +381,7 @@ string BearOffStone(integer from_point, integer color) {
     if (pieceToRemove == "") return "";
     
     string newFromContents = llDumpList2String(newFromPieces, ",");
+    if (DEBUG_MODE) llOwnerSay("DEBUG CORE: BearOffStone " + (string)from_point + " Content: '" + fromPointContents + "' -> '" + newFromContents + "' Removing: " + pieceToRemove);
     BoardList = llListReplaceList(BoardList, [newFromContents], from_point, from_point);
     
     if (color == 0) {
@@ -643,7 +644,7 @@ triggerAIIfNeeded() {
             }
         }
         
-        llMessageLinked(LINK_SET, 0, "DICE_VALUES|" + (string)u1 + "|" + (string)u2, NULL_KEY);
+        llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
         llSleep(3.0);
         llMessageLinked(LINK_SET, 0, "TRIGGER_AI_TURN|" + turn + "|" + (string)u1 + "|" + (string)u2 + "|" + (string)isDoubles + "|" + (string)movesLeft, NULL_KEY);
     }
@@ -753,7 +754,7 @@ default {
                 isDoubles = (die1 == die2);
                 if(isDoubles) movesLeft = 4;
                 else movesLeft = 0;
-                llMessageLinked(LINK_SET, 0, "DICE_VALUES|" + (string)u1 + "|" + (string)u2, NULL_KEY);
+                llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
             }
         }
         else if (command == "PLAYER_JOIN") {
