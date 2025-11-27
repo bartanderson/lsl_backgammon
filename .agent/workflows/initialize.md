@@ -13,7 +13,7 @@ cat task.md  # In artifacts directory
 Review what was in progress.
 
 ## Step 2: Review Critical Guidelines
-1. Read `DEVELOPMENT_GUIDELINES.md` - File editing rules (>300 lines = write_to_file)
+1. Read `DEVELOPMENT_GUIDELINES.md` - **ALL .lsl files MUST use safe_edit.py**
 2. Read `.agent/PRE_EDIT_CHECKLIST.md` - Pre-edit checklist
 
 ## Step 3: Verify Tools Are Available
@@ -37,7 +37,7 @@ cat BUGS_TRACKER.md
 ```
 
 ## Critical Rules Reminder
-- Files >300 lines: Use `write_to_file` or `safe_edit.py` ONLY
-- Check file line count BEFORE editing
+- **ALL .lsl files**: MUST use `safe_edit.py` - NEVER use replace_file_content
+- Pre-commit hook requires "SAFE_EDIT" in commit message for large files
 - Commit immediately after successful edits
 - LSL: Use `llParseStringKeepNulls` not `llParseString2List`
