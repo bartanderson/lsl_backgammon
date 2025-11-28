@@ -539,12 +539,30 @@ list getValidMovesFromPoint(integer fromPoint) {
     if (!isDoubles && currentDie1 > 0 && currentDie2 > 0) {
         integer combinedDie = currentDie1 + currentDie2;
         string move = checkSingleDieMove(fromPoint, combinedDie, direction);
+        
         if (move != "") {
-            // Format the move to indicate it uses both dice
-            move = "PLAYER_MOVE|" + currentTurn + "|" + (string)fromPoint + "|" + 
-                   llList2String(llParseString2List(move, ["|"], []), 3) + "|" + 
-                   (string)combinedDie + "|2";
-            moves += [move];
+            // FIX: Validate intermediate points for combined moves
+            // We must be able to move using die1 then die2, OR die2 then die1
+            integer mid1 = fromPoint + (currentDie1 * direction);
+            integer mid2 = fromPoint + (currentDie2 * direction);
+            
+            integer validPath = FALSE;
+            
+            // Check path 1: d1 first
+            if (isValidMove(fromPoint, mid1, currentDie1)) validPath = TRUE;
+            
+            // Check path 2: d2 first (if path 1 invalid)
+            if (!validPath && isValidMove(fromPoint, mid2, currentDie2)) validPath = TRUE;
+            
+            if (validPath) {
+                // Format the move to indicate it uses both dice
+                move = "PLAYER_MOVE|" + currentTurn + "|" + (string)fromPoint + "|" + 
+                       llList2String(llParseString2List(move, ["|"], []), 3) + "|" + 
+                       (string)combinedDie + "|2";
+                moves += [move];
+            } else {
+                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Combined move blocked at intermediate point");
+            }
         }
     }
     

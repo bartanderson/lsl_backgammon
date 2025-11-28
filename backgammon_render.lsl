@@ -591,7 +591,7 @@ default {
                 BlackBarList += [piece];
                 if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
             }
-            
+        }
         else if(command == "BEAR_OFF_PIECE") {
             string piece = llList2String(params, 1);
             integer from_point = llList2Integer(params, 2);
@@ -611,9 +611,6 @@ default {
             integer color;
             if(llGetSubString(piece, 0, 0) == "w") color = 0;
             else color = 1;
-            
-            Arrange(color, from_point);
-        }
             
             Arrange(color, from_point);
         }
