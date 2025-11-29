@@ -63,6 +63,25 @@ integer hasPlayerPieceAtPoint(integer point, string playerColor) {
     return (pointContents != "" && llSubStringIndex(pointContents, playerColor) != -1);
 }
 
+integer isPointBlocked(integer point, integer color) {
+    if (point < 0 || point >= BOARD_SIZE) return FALSE; // Off board is not "blocked" in this sense
+    
+    string pointContents = llList2String(BoardList, point);
+    if (pointContents == "") return FALSE;
+    
+    string oppColor = "b";
+    if (color == 1) oppColor = "w";
+    
+    list pieces = llParseString2List(pointContents, [","], []);
+    integer oppCount = 0;
+    integer j;
+    for(j=0; j<llGetListLength(pieces); j++) {
+        if (llGetSubString(llList2String(pieces, j), 0, 0) == oppColor) oppCount++;
+    }
+    
+    return (oppCount >= 2);
+}
+
 sendBarStateToRender() {
     string barStateMessage = "BAR_STATE|" + 
         llDumpList2String(WhiteBarList, "|") + "|" + 
@@ -295,62 +314,139 @@ integer mustBearOff(integer color) {
 list calculateValidMoves(integer fromPoint, integer color) {
     list moves = [];
     
+    // Special handling for bar entry
+    if (fromPoint == FROM_BAR) {
+        list singleDice = [];
+        if (u1 > 0) singleDice += u1;
+        if (u2 > 0) singleDice += u2;
+        if (isDoubles && movesLeft > 0) singleDice = [u1];
+        
+        integer i;
+        for(i = 0; i < llGetListLength(singleDice); i++) {
+            integer die = llList2Integer(singleDice, i);
+            integer entryPoint;
+            
+            // Bar entry points are different for each color
+            if (color == 0) {
+                // White enters on points 0-23 (die 1 = point 0, die 6 = point 5)
+                entryPoint = die - 1;
+            } else {
+                // Black enters on points 0-23 (die 1 = point 23, die 6 = point 18)
+                entryPoint = 24 - die;
+            }
+            
+            if (entryPoint >= 0 && entryPoint < BOARD_SIZE && !isPointBlocked(entryPoint, color)) {
+                if (llListFindList(moves, [entryPoint]) == -1) moves += entryPoint;
+            }
+        }
+        
+        return moves;
+    }
+    
     // Check if we MUST bear off (all pieces in home board)
-    // If so, we can ONLY bear off or move within home board
     integer bearingOff = mustBearOff(color);
     
     integer direction = 1;
     if (color == 1) direction = -1; // Black moves down
     
-    list diceToCheck = [];
-    if (u1 > 0) diceToCheck += u1;
-    if (u2 > 0) diceToCheck += u2;
+    // 1. Check Single Dice Moves
+    list singleDice = [];
+    if (u1 > 0) singleDice += u1;
+    if (u2 > 0) singleDice += u2;
+    
+    // If doubles, we treat the first move as a single die move of value u1
     if (isDoubles && movesLeft > 0) {
-        // If doubles, we can use the die value up to movesLeft times
-        // But for marker display, we just need to know unique reachable points
-        diceToCheck = [u1]; 
-        if (movesLeft >= 2) diceToCheck += (u1 * 2);
-        if (movesLeft >= 3) diceToCheck += (u1 * 3);
-        if (movesLeft >= 4) diceToCheck += (u1 * 4);
-    } else if (u1 > 0 && u2 > 0) {
-        // Combined move
-        diceToCheck += (u1 + u2);
+        singleDice = [u1];
     }
     
     integer i;
-    for(i = 0; i < llGetListLength(diceToCheck); i++) {
-        integer die = llList2Integer(diceToCheck, i);
+    for(i = 0; i < llGetListLength(singleDice); i++) {
+        integer die = llList2Integer(singleDice, i);
         integer toPoint = fromPoint + (die * direction);
         
         if (toPoint < 0 || toPoint >= BOARD_SIZE) {
-            // Potential Bear Off
             if (bearingOff && isValidBearOff(fromPoint, die, color)) {
-                if (llListFindList(moves, [BEAR_OFF]) == -1) {
-                    moves += BEAR_OFF;
-                }
+                if (llListFindList(moves, [BEAR_OFF]) == -1) moves += BEAR_OFF;
             }
         } else {
-            // Normal Move
-            // Check if destination is blocked
-            string destContent = llList2String(BoardList, toPoint);
-            integer blocked = FALSE;
-            if (destContent != "") {
-                string oppColor = "b";
-                if (color == 1) oppColor = "w";
-                
-                // Count opponent pieces
-                list pieces = llParseString2List(destContent, [","], []);
-                integer oppCount = 0;
-                integer j;
-                for(j=0; j<llGetListLength(pieces); j++) {
-                    if (llGetSubString(llList2String(pieces, j), 0, 0) == oppColor) oppCount++;
+            if (!isPointBlocked(toPoint, color)) {
+                if (llListFindList(moves, [toPoint]) == -1) moves += toPoint;
+            }
+        }
+    }
+    
+    // 2. Check Combined/Multi-Step Moves
+    // Only if we have valid single moves can we potentially go further
+    
+    if (isDoubles && movesLeft >= 2) {
+        // Doubles Logic: Check sequential steps
+        // We can move 2*die if 1*die is valid (or bearoff)
+        // We can move 3*die if 2*die is valid, etc.
+        
+        integer die = u1;
+        integer currentPoint = fromPoint;
+        integer stepsPossible = 0; // How many steps of 'die' we can take
+        
+        integer k;
+        for(k = 1; k <= movesLeft; k++) {
+            integer nextPoint = currentPoint + (die * direction);
+            
+            integer stepValid = FALSE;
+            if (nextPoint < 0 || nextPoint >= BOARD_SIZE) {
+                if (bearingOff && isValidBearOff(currentPoint, die, color)) {
+                    stepValid = TRUE;
+                    // Once borne off, we can't move further from this piece's perspective
+                    // But we record this "destination" as valid
+                    if (llListFindList(moves, [BEAR_OFF]) == -1) moves += BEAR_OFF;
+                    k = movesLeft + 1; // Stop checking further steps
                 }
-                if (oppCount >= 2) blocked = TRUE;
+            } else {
+                if (!isPointBlocked(nextPoint, color)) {
+                    stepValid = TRUE;
+                    currentPoint = nextPoint;
+                    // This intermediate or final point is reachable
+                    if (llListFindList(moves, [currentPoint]) == -1) moves += currentPoint;
+                }
             }
             
-            if (!blocked) {
-                if (llListFindList(moves, [toPoint]) == -1) {
-                    moves += toPoint;
+            if (!stepValid) k = movesLeft + 1; // Blocked, stop checking
+        }
+    } 
+    else if (!isDoubles && u1 > 0 && u2 > 0) {
+        // Combined Logic (Non-Doubles): u1+u2
+        // Valid if: (from+u1 is valid AND from+u1+u2 is valid) OR (from+u2 is valid AND from+u2+u1 is valid)
+        
+        integer dest1 = fromPoint + (u1 * direction);
+        integer dest2 = fromPoint + (u2 * direction);
+        integer destFinal = fromPoint + ((u1 + u2) * direction);
+        
+        integer path1Valid = FALSE; // Path via u1
+        integer path2Valid = FALSE; // Path via u2
+        
+        // Check Path 1: from -> dest1 -> destFinal
+        if (dest1 >= 0 && dest1 < BOARD_SIZE && !isPointBlocked(dest1, color)) {
+            // Intermediate point valid, check final
+            if (destFinal < 0 || destFinal >= BOARD_SIZE) {
+                if (bearingOff && isValidBearOff(dest1, u2, color)) {
+                    if (llListFindList(moves, [BEAR_OFF]) == -1) moves += BEAR_OFF;
+                }
+            } else {
+                if (!isPointBlocked(destFinal, color)) {
+                    if (llListFindList(moves, [destFinal]) == -1) moves += destFinal;
+                }
+            }
+        }
+        
+        // Check Path 2: from -> dest2 -> destFinal
+        if (dest2 >= 0 && dest2 < BOARD_SIZE && !isPointBlocked(dest2, color)) {
+            // Intermediate point valid, check final
+            if (destFinal < 0 || destFinal >= BOARD_SIZE) {
+                if (bearingOff && isValidBearOff(dest2, u1, color)) {
+                    if (llListFindList(moves, [BEAR_OFF]) == -1) moves += BEAR_OFF;
+                }
+            } else {
+                if (!isPointBlocked(destFinal, color)) {
+                    if (llListFindList(moves, [destFinal]) == -1) moves += destFinal;
                 }
             }
         }
@@ -563,6 +659,14 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         else if (die_value == u2) u2 = 0;
     } else movesLeft = movesLeft - movesUsed;
 
+    // Notify UI of remaining dice
+    if (!isDoubles && (u1 > 0 || u2 > 0)) {
+        llMessageLinked(LINK_SET, 0, "DICE_REMAINING|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
+    } else if (isDoubles && movesLeft > 0) {
+        llMessageLinked(LINK_SET, 0, "DICE_REMAINING|" + turn + "|" + (string)u1 + "|" + (string)u2 + "|" + (string)movesLeft, NULL_KEY);
+    }
+
+
     integer turnOver = FALSE;
     
     if (isDoubles) {
@@ -573,6 +677,15 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         else turnOver = FALSE;
     }
     
+    // Check if player has any valid moves remaining (even if dice remain)
+    if (!turnOver) {
+        if (!checkAnyValidMoves(color)) {
+            if (DEBUG_MODE) llOwnerSay("CORE: No valid moves remaining mid-turn - forcing turn end");
+            llMessageLinked(LINK_SET, 0, "GAME_MESSAGE|No more valid moves for " + turn + ". Turn ending.", NULL_KEY);
+            turnOver = TRUE;
+        }
+    }
+    
     if (turnOver) {
         if (isGameOver()) {
             gCurrentState = STATE_GAME_OVER;
@@ -580,19 +693,7 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
             if (llGetListLength(BlackBorneOff) >= 15) winner = "black";
             llMessageLinked(LINK_SET, 0, "GAME_OVER|" + winner, NULL_KEY);
         } else {
-            if (turn == "white") turn = "black";
-            else turn = "white";
-            
-            u1 = 0;
-            u2 = 0;
-            whiteOnce = FALSE;
-            blackOnce = FALSE;
-            isDoubles = FALSE;
-            movesLeft = 0;
-
-            llMessageLinked(LINK_SET, 0, "TURN_CHANGE|" + turn, NULL_KEY);
-            llSleep(2.0);
-            triggerAIIfNeeded();
+            changeTurn();
         } 
     } else {
         integer isAIPlayer = FALSE;
@@ -650,6 +751,47 @@ triggerAIIfNeeded() {
     }
 }
 
+changeTurn() {
+    if (turn == "white") turn = "black";
+    else turn = "white";
+    
+    u1 = 0;
+    u2 = 0;
+    whiteOnce = FALSE;
+    blackOnce = FALSE;
+    isDoubles = FALSE;
+    movesLeft = 0;
+
+    llMessageLinked(LINK_SET, 0, "TURN_CHANGE|" + turn, NULL_KEY);
+    llSleep(2.0);
+    triggerAIIfNeeded();
+}
+
+integer checkAnyValidMoves(integer color) {
+    // Check pieces on bar first
+    if (color == 0 && llGetListLength(WhiteBarList) > 0) {
+        if (llGetListLength(calculateValidMoves(FROM_BAR, color)) > 0) return TRUE;
+        return FALSE; // Can only move from bar
+    }
+    if (color == 1 && llGetListLength(BlackBarList) > 0) {
+        if (llGetListLength(calculateValidMoves(FROM_BAR, color)) > 0) return TRUE;
+        return FALSE; // Can only move from bar
+    }
+    
+    // Check all board points
+    integer i;
+    string playerColor = "w";
+    if (color == 1) playerColor = "b";
+    
+    for(i = 0; i < 24; i++) {
+        if (hasPlayerPieceAtPoint(i, playerColor)) {
+            if (llGetListLength(calculateValidMoves(i, color)) > 0) return TRUE;
+        }
+    }
+    
+    return FALSE;
+}
+
 handleFirstRollPhase(string player, integer die1, integer die2) {
     if (player == "white") {
         whiteDie = die1;
@@ -696,6 +838,8 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
         u1 = blackDie1;
         u2 = whiteDie1; // Winner uses their die + loser's die
     }
+    
+    llSleep(3.0); // Allow time to see the second roll
     
     gCurrentState = STATE_MAIN_GAME;
     llMessageLinked(LINK_SET, 0, "FIRST_TURN|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
@@ -747,6 +891,7 @@ default {
             if (gCurrentState == STATE_RESET || gCurrentState == STATE_FIRST_ROLL) {
                 if (gCurrentState == STATE_RESET) gCurrentState = STATE_FIRST_ROLL;
                 handleFirstRollPhase(player, die1, die2);
+                return; // Exit to prevent processing in STATE_MAIN_GAME logic below
             }
             else if (gCurrentState == STATE_MAIN_GAME && player == turn) {
                 u1 = die1;
@@ -755,6 +900,22 @@ default {
                 if(isDoubles) movesLeft = 4;
                 else movesLeft = 0;
                 llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
+                
+                // Check for Human No-Moves Scenario
+                integer isAIPlayer = FALSE;
+                if (turn == "white" && CORE_WHITE_AI) isAIPlayer = TRUE;
+                else if (turn == "black" && CORE_BLACK_AI) isAIPlayer = TRUE;
+                
+                if (!isAIPlayer) {
+                    integer color = 0;
+                    if (turn == "black") color = 1;
+                    
+                    if (!checkAnyValidMoves(color)) {
+                        llMessageLinked(LINK_SET, 0, "GAME_MESSAGE|No valid moves for " + turn + ". Passing turn.", NULL_KEY);
+                        llSleep(2.0);
+                        changeTurn();
+                    }
+                }
             }
         }
         else if (command == "PLAYER_JOIN") {
@@ -776,9 +937,9 @@ default {
                 if (white == NULL_KEY && black == NULL_KEY) {
                     llSleep(2.0);
                     whiteDie1 = 1 + (integer)llFrand(6);
-                    whiteDie2 = 1 + (integer)llFrand(6);
+                    whiteDie2 = 0; // First roll is one die only
                     blackDie1 = 1 + (integer)llFrand(6);
-                    blackDie2 = 1 + (integer)llFrand(6);
+                    blackDie2 = 0; // First roll is one die only
                     
                     llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
                     llSleep(1.0);
@@ -858,26 +1019,38 @@ default {
             if (DEBUG_MODE) llOwnerSay("CORE: Received manual AI trigger request");
             triggerAIIfNeeded();
         }
-        else if (command == "AI_NO_MOVES") {
-            string player = llList2String(params, 1);
-            if (player == turn) {
-                if (DEBUG_MODE) llOwnerSay("CORE: AI has no moves - passing turn");
-                
-                // Pass turn
-                if (turn == "white") turn = "black";
-                else turn = "white";
-                
-                u1 = 0;
-                u2 = 0;
-                whiteOnce = FALSE;
-                blackOnce = FALSE;
-                isDoubles = FALSE;
-                movesLeft = 0;
 
-                llMessageLinked(LINK_SET, 0, "TURN_CHANGE|" + turn, NULL_KEY);
-                llSleep(2.0);
-                triggerAIIfNeeded();
+        else if (command == "GET_PIECE_POSITION") {
+            string pieceName = llList2String(params, 1);
+            string playerKey = llList2String(params, 2);
+            
+            integer found = FALSE;
+            integer position = -1;
+            
+            // Check Bar first
+            if (llListFindList(WhiteBarList, [pieceName]) != -1) {
+                position = FROM_BAR;
+                found = TRUE;
+            } else if (llListFindList(BlackBarList, [pieceName]) != -1) {
+                position = FROM_BAR;
+                found = TRUE;
             }
+            
+            // Check Board
+            if (!found) {
+                integer i;
+                for(i = 0; i < 24; i++) {
+                    string point = llList2String(BoardList, i);
+                    list pieces = llParseString2List(point, [","], []);
+                    if (llListFindList(pieces, [pieceName]) != -1) {
+                        position = i;
+                        found = TRUE;
+                        i = 24; // Break
+                    }
+                }
+            }
+            
+            llMessageLinked(LINK_SET, 0, "PIECE_POSITION|" + pieceName + "|" + (string)position + "|" + playerKey, NULL_KEY);
         }
         else if (command == "REQUEST_VALID_MOVES") {
             integer point = llList2Integer(params, 1);
@@ -919,12 +1092,7 @@ default {
                 u1 = 0;
                 u2 = 0;
 
-                if (turn == "white") turn = "black";
-                else turn = "white";
-        
-                llMessageLinked(LINK_SET, 0, "TURN_CHANGE|" + turn, NULL_KEY);
-                llSleep(2.0);
-                triggerAIIfNeeded();
+                changeTurn();
             }
         }
     }

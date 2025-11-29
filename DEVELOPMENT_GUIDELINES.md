@@ -16,6 +16,17 @@
     python .agent/tools/safe_edit.py backgammon_render.lsl 241 249 .temp_replacement.txt
     # 3. Clean up temp files after committing
     ```
+*   **Sequential Edits**:
+    *   **NEVER** queue multiple `safe_edit.py` calls for the same file in a single turn.
+    *   **ALWAYS** `view_file` after *every* edit to re-verify line numbers before the next edit.
+    *   Line numbers shift after every edit. Guessing new line numbers is the #1 cause of file corruption.
+*   **Post-Edit Verification (MANDATORY)**:
+    *   After **EVERY** `safe_edit.py` call, you MUST:
+        1. `view_file` the edited section plus 10 lines before and after
+        2. Verify syntax: Check for balanced braces `{}`, proper `else if` chains, no orphaned statements
+        3. Verify logic: Ensure the edit makes sense in context
+        4. **If any issues found**, fix them IMMEDIATELY before proceeding
+    *   This is NOT optional. Skipping verification has caused multiple file corruptions.
 
 
 ## 2. LSL Coding Standards
@@ -26,6 +37,8 @@
     *   Use global variables for large data structures to avoid stack overflow, but be careful with state changes.
 *   **Event Handling**:
     *   Keep event handlers concise. Long processing blocks can block other events.
+*   **Syntax Limitations**:
+    *   **NO Ternary Operators**: LSL does not support the `condition ? true : false` syntax. Use standard `if/else` blocks.
 
 ## 3. Git Workflow
 *   **Commit Frequency**:

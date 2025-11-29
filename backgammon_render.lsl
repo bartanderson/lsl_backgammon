@@ -11,6 +11,7 @@ list faceRotations;
 
 integer silver1MarkerLink = -1;
 integer silver2MarkerLink = -1;
+integer goldMarkerLink = -1;
 integer FROM_BAR = -2;
 
 integer i;
@@ -125,19 +126,7 @@ animateDieRoll(string name, integer finalValue) {
     integer n = GetLinkNumber(name);
     if (n == 0) return;
     
-    llSetLinkPrimitiveParamsFast(n, [
-        PRIM_OMEGA, <1, 1, 1>, PI, 1.0
-    ]);
-    
-    integer i;
-    for(i = 0; i < 8; i = i + 1) {
-        integer tempValue = (integer)llFrand(6) + 1;
-        rotation tempRot = llList2Rot(faceRotations, tempValue - 1);
-        llSetLinkPrimitiveParamsFast(n, [PRIM_ROT_LOCAL, tempRot]);
-        llSleep(0.1);
-    }
-    
-    llSetLinkPrimitiveParamsFast(n, [PRIM_OMEGA, <0, 0, 0>, 0, 0]);
+    // Just set the value directly without animation
     rotateDieToValue(name, finalValue);
 }
 
@@ -228,6 +217,7 @@ init_render() {
     localHeight = local_surfaceHeight() + checkerheight/2 - 0.223;
     hideMarker(1);
     hideMarker(2);
+    hideMarker(3);
     if (DEBUG_MODE_VERBOSE) {
         // Debug output
         llOwnerSay("Pieces positioned with simple tip bias (0.1) and spacing (0.011)");
@@ -325,40 +315,45 @@ Arrange(integer color, integer position) {
 }
 
 positionMarker(integer markerType, integer color, integer position) {
-    // Convert internal position to physical board coordinates
-    // The board is fixed - points 1-12 on bottom, 13-24 on top
-    // Internal position 0-23 corresponds to points 1-24
-    
-    integer xListPos;
-    integer isTopPoint = (position >= 12); // Points 13-24 are top (internal 12-23)
-    
-    if (isTopPoint) {
-        // Top points: use mirrored x-coordinates
-        xListPos = 23 - position;
-    } else {
-        // Bottom points: use direct x-coordinates
-        xListPos = position;
-    }
-    
-    // Select appropriate vertical list based on physical position
+    float uPosition;
     list verticalList;
-    if (isTopPoint) {
-        verticalList = bList; // Top points use black's vertical positions
+    
+    // Handle special bear-off position (-99)
+    if (position == -99) {
+        // Position beyond the board edge using actual UV coordinates
+        // Both White and Black bear off beyond their point 1 (beyond right edge)
+        if (color == 0) {
+            // White bears off beyond point 0 (beyond right edge on bottom)
+            uPosition = 0.991 + 0.05; // Right edge plus offset
+            verticalList = wList;
+        } else {
+            // Black bears off beyond point 23 (beyond right edge on top)
+            uPosition = 0.991 + 0.05; // Right edge plus offset
+            verticalList = bList;
+        }
     } else {
-        verticalList = wList; // Bottom points use white's vertical positions
+        // Regular board position
+        integer isTopPoint = (position >= 12);
+        
+        if (isTopPoint) {
+            verticalList = bList;
+        } else {
+            verticalList = wList;
+        }
+        uPosition = llList2Float(xList, position);
     }
     
     // Get the appropriate marker prim
     integer num;
-
-    if (markerType == 1) num = silver1MarkerLink;
-    else if (markerType == 2) num = silver2MarkerLink;
+    if (markerType == 1) num = goldMarkerLink;
+    else if (markerType == 2) num = silver1MarkerLink;
+    else if (markerType == 3) num = silver2MarkerLink;
     
     // Position the marker
     llSetLinkPrimitiveParamsFast(num, [
         PRIM_POSITION, 
         ScaledFromUV(<
-            llList2Float(xList, xListPos), 
+            uPosition, 
             llList2Float(verticalList, 2), 
             localHeight
         >)
@@ -367,8 +362,9 @@ positionMarker(integer markerType, integer color, integer position) {
 
 hideMarker(integer markerType) {
     integer num;
-    if(markerType == 1) num = silver1MarkerLink;
-    else if(markerType == 2) num = silver2MarkerLink;
+    if(markerType == 1) num = goldMarkerLink;
+    else if(markerType == 2) num = silver1MarkerLink;
+    else if(markerType == 3) num = silver2MarkerLink;
     llSetLinkPrimitiveParamsFast(num, [PRIM_POSITION, ZERO_VECTOR]);
 }
 
@@ -403,6 +399,7 @@ default {
     state_entry() {
         silver1MarkerLink = GetLinkNumber("silver1");
         silver2MarkerLink = GetLinkNumber("silver2");
+        goldMarkerLink = GetLinkNumber("gold");
         init_render();
     }
     
@@ -614,6 +611,15 @@ default {
             
             Arrange(color, from_point);
         }
+        else if (command == "DICE_ROLL") {
+            string player = llList2String(params, 1);
+            integer die1 = llList2Integer(params, 2);
+            integer die2 = llList2Integer(params, 3);
+            
+            if (DEBUG_MODE) llOwnerSay("DEBUG: Animating dice roll for " + player + ": " + (string)die1 + ", " + (string)die2);
+            
+            animateDiceRoll(player, die1, die2);
+        }
         else if (command == "DICE_RESULT") {
             string player = llList2String(params, 1);
             integer die1 = llList2Integer(params, 2);
@@ -648,6 +654,7 @@ default {
             // Also hide any markers
             hideMarker(1);
             hideMarker(2);
+            hideMarker(3);
             
             resetDice();
             if (DEBUG_MODE) {
