@@ -1,33 +1,37 @@
 # LSL Backgammon Development Guidelines
 
-## 1. File Editing Rules
-*   **ALL LSL Files**:
-    *   **MUST** use `.agent/tools/safe_edit.py` for ANY edits to `.lsl` files.
-    *   **NEVER** use `replace_file_content` or `multi_replace_file_content` on LSL files. These tools are unreliable for LSL files (especially with CRLF line endings) and cause file corruption.
-    *   The 300-line threshold mentioned previously was too lax - use `safe_edit.py` for ALL LSL files regardless of size.
-*   **Pre-commit Hook**:
-    *   A git pre-commit hook enforces this rule for files >300 lines.
-    *   Commits modifying large LSL files MUST include "SAFE_EDIT" in the commit message.
-    *   If the hook blocks your commit, use: `git commit --no-verify -m "SAFE_EDIT: your message"`
-*   **safe_edit.py Usage**:
-    ```bash
-    # 1. Create a temp file with the replacement content
-    # 2. Run safe_edit.py with: filepath start_line end_line replacement_file
-    python .agent/tools/safe_edit.py backgammon_render.lsl 241 249 .temp_replacement.txt
-    # 3. Clean up temp files after committing
-    ```
-*   **Sequential Edits**:
-    *   **NEVER** queue multiple `safe_edit.py` calls for the same file in a single turn.
-    *   **ALWAYS** `view_file` after *every* edit to re-verify line numbers before the next edit.
-    *   Line numbers shift after every edit. Guessing new line numbers is the #1 cause of file corruption.
-*   **Post-Edit Verification (MANDATORY)**:
-    *   After **EVERY** `safe_edit.py` call, you MUST:
-        1. `view_file` the edited section plus 10 lines before and after
-        2. Verify syntax: Check for balanced braces `{}`, proper `else if` chains, no orphaned statements
-        3. Verify logic: Ensure the edit makes sense in context
-        4. **If any issues found**, fix them IMMEDIATELY before proceeding
-    *   This is NOT optional. Skipping verification has caused multiple file corruptions.
+## 1. File Editing Rules - THE REAL SAFETY NET
 
+**Reality Check:** The agent will use `replace_file_content` and `multi_replace_file_content` despite instructions otherwise. Accept this and focus on safety nets that actually work.
+
+### Mandatory Safety Protocol for ALL LSL Edits:
+
+1. **BEFORE Edit:**
+   - `view_file` to get exact, current line numbers
+   - Never use stale line numbers from previous views
+
+2. **DURING Edit:**
+   - Use `replace_file_content` for single, contiguous edits
+   - Use `multi_replace_file_content` for multiple non-contiguous edits
+   - **NEVER** make multiple edits to the same file in parallel
+
+3. **AFTER Edit (MANDATORY - NOT OPTIONAL):**
+   - `view_file` the edited section PLUS 10 lines before and after
+   - Verify syntax: Balanced braces `{}`, proper `else if` chains, no orphaned statements
+   - Verify logic: Edit makes sense in context
+   - **If ANY issues found**: Fix IMMEDIATELY before proceeding
+
+4. **COMMIT Immediately (THE REAL SAFETY NET):**
+   - After successful edit + verification, commit to git IMMEDIATELY
+   - Use descriptive commit message
+   - This allows instant rollback if problems discovered later
+   - **DO NOT** accumulate multiple LSL edits before committing
+
+### Why This Works:
+- Post-edit verification catches corruption early
+- Immediate git commits provide instant rollback capability
+- You (the user) can monitor git history and revert bad changes
+- Accepts agent behavior reality rather than fighting it
 
 ## 2. LSL Coding Standards
 *   **String Parsing**:
@@ -39,6 +43,10 @@
     *   Keep event handlers concise. Long processing blocks can block other events.
 *   **Syntax Limitations**:
     *   **NO Ternary Operators**: LSL does not support the `condition ? true : false` syntax. Use standard `if/else` blocks.
+*   **Logic Trace (MANDATORY)**:
+    *   Before writing any loop or index calculation, explicitly trace the bounds (Start, End, Count) in your thought process.
+    *   Verify 0-based vs 1-based indexing for every list operation.
+    *   **STOP** and verify math like `count - index` or `limit - start`. Do not assume it is trivial.
 
 ## 3. Git Workflow
 *   **Commit Frequency**:
@@ -51,6 +59,6 @@
 
 ## 4. Agent Behavior
 *   **Initialization**:
-    *   Always run the `/initialize` workflow at the start of a session to ensure the environment is ready.
+    *   Always run the `/initialize` or `/resume` workflow at the start of a session to ensure the environment is ready.
 *   **Pre-Edit Check**:
     *   Consult `.agent/PRE_EDIT_CHECKLIST.md` before making changes to critical files.

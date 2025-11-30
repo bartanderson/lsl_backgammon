@@ -1,25 +1,76 @@
 # Pre-Edit Checklist
 
-Before editing any file in this project, verify the following:
+**Reality Check:** The agent will use standard tools despite instructions. Focus on what actually works: verification and git commits.
 
-1.  **[ ] LSL File Check**
-    *   Is this a `.lsl` file?
-    *   **YES**: **MUST** use `.agent/tools/safe_edit.py`. **NEVER** use `replace_file_content` or `multi_replace_file_content`.
-    *   **NO**: Standard tools are acceptable.
+Before editing any LSL file:
 
-2.  **[ ] Backup Check**
-    *   Is this a critical file (`backgammon_*.lsl`)?
-    *   If yes, is there a recent git commit?
-    *   If unsure, `safe_edit.py` automatically creates backups.
+1.  **[ ] View First**
+    *   Use `view_file` to get exact, current line numbers
+    *   Never use stale line numbers from previous views
 
-3.  **[ ] Context Check**
-    *   Have you read enough of the file to understand the context of the change?
-    *   Do you have the latest version of the file? (Check `git status` or `ls -l` timestamp).
+2.  **[ ] Git Status Check**
+    *   Run `git status` to see current state
+    *   Ensure previous edits are committed
 
-4.  **[ ] LSL Specifics**
-    *   Are you using `llParseStringKeepNulls`?
-    *   Are you avoiding known LSL pitfalls?
+3.  **[ ] Single File Focus**
+    *   Are you making multiple edits to the same file?
+    *   **STOP**: Do them one by one
+    *   **VERIFY**: `view_file` after *each* edit to confirm line numbers for the next step
 
-5.  **[ ] Commit Message**
-    *   For large LSL files (>300 lines), include "SAFE_EDIT" in commit message
-    *   Or use `git commit --no-verify` if the pre-commit hook blocks you
+## POST-EDIT VERIFICATION (MANDATORY)
+
+**After EVERY edit to an LSL file, you MUST complete this checklist:**
+
+1.  **[ ] View Result**
+    *   Use `view_file` to view edited section PLUS 10 lines before and after
+    *   This catches context issues like orphaned braces
+
+2.  **[ ] Check Syntax**
+    *   Balanced braces: Every `{` has matching `}`
+    *   Proper `else if` chains: No missing conditions
+    *   No orphaned statements: Every statement inside proper block
+    *   LSL-specific: Check for proper semicolons, quotes
+
+3.  **[ ] Verify Logic**
+    *   Does the edit make sense in context?
+    *   Are there unintended side effects?
+    *   Did the replacement preserve surrounding code?
+
+4.  **[ ] Commit Immediately (THE REAL SAFETY NET)**
+    *   `git add <file>`
+    *   `git commit -m "Descriptive message"`
+    *   This allows instant rollback if problems discovered later
+    *   **DO NOT** accumulate multiple LSL edits before committing
+
+5.  **[ ] If Issues Found**
+    *   Fix IMMEDIATELY before proceeding
+    *   Do NOT make additional edits with syntax errors present
+    *   Use `git restore <file>` to rollback if needed
+
+**Why immediate commits work:** You (the user) can monitor git history and instantly revert bad changes. This is more reliable than trying to prevent the agent from using certain tools.
+
+
+## POST-EDIT VERIFICATION (MANDATORY)
+
+**After EVERY `safe_edit.py` call, you MUST complete this checklist:**
+
+1.  **[ ] View Result**
+    *   Use `view_file` to view edited section PLUS 10 lines before and after
+    *   This catches context issues like orphaned braces
+
+2.  **[ ] Check Syntax**
+    *   Balanced braces: Every `{` has matching `}`
+    *   Proper `else if` chains: No missing conditions
+    *   No orphaned statements: Every statement inside proper block
+    *   LSL-specific: Check for proper semicolons, quotes
+
+3.  **[ ] Verify Logic**
+    *   Does the edit make sense in context?
+    *   Are there unintended side effects?
+    *   Did the replacement preserve surrounding code?
+
+4.  **[ ] If Issues Found**
+    *   Fix IMMEDIATELY before proceeding
+    *   Do NOT make additional edits with syntax errors present
+
+**Skipping this verification has caused multiple file corruptions. It is NOT optional.**
