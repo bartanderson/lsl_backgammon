@@ -41,3 +41,6 @@ cat BUGS_TRACKER.md
 - Pre-commit hook requires "SAFE_EDIT" in commit message for large files
 - Commit immediately after successful edits
 - LSL: Use `llParseStringKeepNulls` not `llParseString2List`
+- **PowerShell**:
+  - Do NOT use `rm`. Use `Remove-Item`.
+  - Do NOT use `grep`. Use `Select-String` or the `grep_search` tool.

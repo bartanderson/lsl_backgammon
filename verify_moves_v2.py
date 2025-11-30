@@ -129,4 +129,4 @@ def is_point_open(board, point_idx, player):
     return True
 
 if __name__ == "__main__":
-    parse_log("log3.txt")
+    parse_log("log4.txt")
