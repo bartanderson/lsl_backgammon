@@ -37,10 +37,15 @@ cat BUGS_TRACKER.md
 ```
 
 ## Critical Rules Reminder
-- **ALL .lsl files**: MUST use `safe_edit.py` - NEVER use replace_file_content
-- Pre-commit hook requires "SAFE_EDIT" in commit message for large files
-- Commit immediately after successful edits
+- **ALL .lsl files**: Use standard tools with MANDATORY post-edit verification
+- Commit immediately after successful edits (THE REAL SAFETY NET)
 - LSL: Use `llParseStringKeepNulls` not `llParseString2List`
 - **PowerShell**:
   - Do NOT use `rm`. Use `Remove-Item`.
   - Do NOT use `grep`. Use `Select-String` or the `grep_search` tool.
+
+## Available Log Analysis Tools
+When debugging game logs, remember these tools exist:
+- **`python .agent/tools/analyze_log.py <logfile>`** - Tracks piece movements, detects ghosting/teleporting
+- **`python verify_moves_v2.py`** - Validates combined moves have valid intermediate positions
+- See `.agent/tools/README.md` for details

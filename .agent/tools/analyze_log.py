@@ -132,4 +132,8 @@ def parse_log(file_path):
         if b_left: out.write(f"Black Left: {b_left}\n")
 
 if __name__ == "__main__":
-    parse_log("c:\\Users\\bartl\\dev\\lsl_backgammon\\log.txt")
+    import sys
+    log_file = sys.argv[1] if len(sys.argv) > 1 else "log.txt"
+    print(f"Analyzing: {log_file}")
+    parse_log(log_file)
+    print(f"Results written to: analysis_results.txt")
