@@ -7,8 +7,8 @@ description: Mandatory agent initialization when resuming LSL backgammon work
 **RUN THIS FIRST when resuming work on LSL backgammon project**
 
 ## Step 1: Check Current Task Status
-```bash
-cat task.md  # In artifacts directory
+```powershell
+Get-Content task.md  # In root directory
 ```
 Review what was in progress.
 
@@ -17,23 +17,23 @@ Review what was in progress.
 2. Read `.agent/PRE_EDIT_CHECKLIST.md` - Pre-edit checklist
 
 ## Step 3: Verify Tools Are Available
-```bash
-ls .agent/tools/safe_edit.py
+```powershell
+Test-Path .agent/tools/safe_edit.py
 ```
-If missing, restore from git:
-```bash
+If False, restore from git:
+```powershell
 git checkout HEAD -- .agent/tools/safe_edit.py
 ```
 
 ## Step 4: Check Git Status
-```bash
+```powershell
 git status
 git log --oneline -5
 ```
 
 ## Step 5: Review Recent Bugs
-```bash
-cat BUGS_TRACKER.md
+```powershell
+Get-Content BUGS_TRACKER.md
 ```
 
 ## Critical Rules Reminder
@@ -41,8 +41,9 @@ cat BUGS_TRACKER.md
 - Commit immediately after successful edits (THE REAL SAFETY NET)
 - LSL: Use `llParseStringKeepNulls` not `llParseString2List`
 - **PowerShell**:
-  - Do NOT use `rm`. Use `Remove-Item`.
-  - Do NOT use `grep`. Use `Select-String` or the `grep_search` tool.
+  - Use `Remove-Item` instead of `rm`
+  - Use `Select-String` instead of `grep`
+  - Use `Get-Content` instead of `cat`
 
 ## Available Log Analysis Tools
 When debugging game logs, remember these tools exist:

@@ -427,17 +427,56 @@ default {
             
             // MAIN GAME: Normal turn and permission checks
             if (player != turn) {
-                sendMessage("Not your turn.");
+                if (pieceSelected) {
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|3", NULL_KEY);
+                    pieceSelected = FALSE;
+                    selectedPoint = -1;
+                    selectedPlayer = NULL_KEY;
+                    validMoves = [];
+                    marker2Dest = -1;
+                    marker3Dest = -1;
+                    sendMessage("Selection cancelled. Not your turn.");
+                } else {
+                    sendMessage("Not your turn.");
+                }
                 return;
             }
             
             if (currentDie1 == 0 && currentDie2 == 0) {
-                sendMessage("You must roll the dice before moving pieces.");
+                if (pieceSelected) {
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|3", NULL_KEY);
+                    pieceSelected = FALSE;
+                    selectedPoint = -1;
+                    selectedPlayer = NULL_KEY;
+                    validMoves = [];
+                    marker2Dest = -1;
+                    marker3Dest = -1;
+                    sendMessage("Selection cancelled. Roll dice first.");
+                } else {
+                    sendMessage("You must roll the dice before moving pieces.");
+                }
                 return;
             }
             
             if (!isPlayerAllowed(detLinkKey, player)) {
-                sendMessage("You can only select your own pieces.");
+                if (pieceSelected) {
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                    llMessageLinked(LINK_SET, 0, "HIDE_MARKER|3", NULL_KEY);
+                    pieceSelected = FALSE;
+                    selectedPoint = -1;
+                    selectedPlayer = NULL_KEY;
+                    validMoves = [];
+                    marker2Dest = -1;
+                    marker3Dest = -1;
+                    sendMessage("Selection cancelled. Not your piece.");
+                } else {
+                    sendMessage("You can only select your own pieces.");
+                }
                 return;
             }
             
@@ -740,7 +779,7 @@ default {
                 
                 // Show regular moves on remaining markers
                 integer i;
-                integer maxRegularMoves = 3 - markerNum; // How many markers left (0, 1, or 2)
+                integer maxRegularMoves = 4 - markerNum; // How many markers left (if markerNum=2, we have 2 and 3, so 2 slots)
                 for(i = 0; i < llGetListLength(regularMoves) && i < maxRegularMoves; i++) {
                     integer dest = llList2Integer(regularMoves, i);
                     llMessageLinked(LINK_SET, 0, "SHOW_MARKER|" + (string)markerNum + "|" + (string)color + "|" + (string)dest, NULL_KEY);

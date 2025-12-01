@@ -7,8 +7,8 @@ description: Lightweight initialization for resuming work after a model handoff.
 3. Read `.agent/PRE_EDIT_CHECKLIST.md` to ensure compliance with pre-edit safety checks.
 4. Read `BUGS_TRACKER.md` to review active issues and their status.
 5. **CRITICAL**: Remember that ALL .lsl file edits MUST use `.agent/tools/safe_edit.py` - NEVER use replace_file_content on LSL files.
-6. Check the current directory state with `ls -R` or similar if you need to re-orient yourself with the file structure (optional).
+6. Check the current directory state with `Get-ChildItem -Recurse` if you need to re-orient yourself with the file structure (optional).
 7. **PowerShell Warning**:
-   - Do NOT use `rm`. Use `Remove-Item`.
-   - Do NOT use `grep`. Use `Select-String` or the `grep_search` tool.
-   - Do NOT use `cat`. Use `Get-Content` or `view_file`.
+   - Use `Remove-Item` instead of `rm`
+   - Use `Select-String` instead of `grep`
+   - Use `Get-Content` instead of `cat`

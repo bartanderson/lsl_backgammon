@@ -312,6 +312,7 @@ integer mustBearOff(integer color) {
 }
 
 list calculateValidMoves(integer fromPoint, integer color) {
+    if (DEBUG_MODE) llOwnerSay("DEBUG CORE: calculateValidMoves from=" + (string)fromPoint + " movesLeft=" + (string)movesLeft + " isDoubles=" + (string)isDoubles);
     list moves = [];
     
     // Special handling for bar entry
@@ -379,6 +380,7 @@ list calculateValidMoves(integer fromPoint, integer color) {
     // Only if we have valid single moves can we potentially go further
     
     if (isDoubles && movesLeft >= 2) {
+        if (DEBUG_MODE) llOwnerSay("DEBUG CORE: Checking combined moves for doubles");
         // Doubles Logic: Check sequential steps
         // We can move 2*die if 1*die is valid (or bearoff)
         // We can move 3*die if 2*die is valid, etc.

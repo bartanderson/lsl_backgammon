@@ -325,10 +325,19 @@ positionMarker(integer markerType, integer color, integer position) {
         if (color == 0) {
             // White bears off beyond point 0 (beyond right edge on bottom)
             uPosition = 0.991 + 0.05; // Right edge plus offset
-            verticalList = wList;
+            verticalList = bList; // Bottom list
         } else {
             // Black bears off beyond point 23 (beyond right edge on top)
             uPosition = 0.991 + 0.05; // Right edge plus offset
+            verticalList = wList; // Top list
+        }
+    } else if (position == -2) { // FROM_BAR
+        uPosition = 0.5; // Center of board
+        if (color == 0) {
+            // White bar (Bottom)
+            verticalList = wList; 
+        } else {
+            // Black bar (Top)
             verticalList = bList;
         }
     } else {
