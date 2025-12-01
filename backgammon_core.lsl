@@ -900,7 +900,7 @@ default {
                 u2 = die2;
                 isDoubles = (die1 == die2);
                 if(isDoubles) movesLeft = 4;
-                else movesLeft = 0;
+                else movesLeft = 2;
                 llMessageLinked(LINK_SET, 0, "DICE_RESULT|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
                 
                 // Check for Human No-Moves Scenario
