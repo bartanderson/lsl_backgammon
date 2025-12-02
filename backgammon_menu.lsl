@@ -81,6 +81,34 @@ string getLevelName(integer level) {
     return "Unknown";
 }
 
+
+startAIGame() {
+    llRegionSayTo(menu_user, 0, "Starting AI vs AI game...");
+    
+    // Ensure simulating mode is ON
+    setSimulatingMode(TRUE);
+    gWhiteAI = TRUE;
+    gBlackAI = TRUE;
+    
+    // Update menu state
+    whitePlayer = NULL_KEY;
+    blackPlayer = NULL_KEY;
+    
+    llOwnerSay("DEBUG: Sending SET_PLAYER_KEYS to UI");
+    llMessageLinked(LINK_SET, 0, "SET_PLAYER_KEYS|" + (string)NULL_KEY + "|" + (string)NULL_KEY, NULL_KEY);
+    
+    // Update core with AI players
+    llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|white|" + (string)NULL_KEY, NULL_KEY);
+    llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|black|" + (string)NULL_KEY, NULL_KEY);
+    
+    // Update menu state
+    llMessageLinked(LINK_SET, 0, "UPDATE_GAME_STATE|" + currentTurn + "|" + (string)currentDie1 + "|" + (string)currentDie2 + "|" + (string)NULL_KEY + "|" + (string)NULL_KEY + "|" + (string)simulating, NULL_KEY);
+    
+    // Auto-start the game for AI vs AI
+    llSleep(2.0);
+    llMessageLinked(LINK_SET, 0, "START_FIRST_ROLL", NULL_KEY);
+}
+
 showMainMenu(key user) {
     menu_user = user;
     
@@ -143,7 +171,7 @@ showDifferentLevelsMenu() {
     prompt += "\nBlack: " + getLevelName(BLACK_AI_LEVEL);
     
     llDialog(menu_user, prompt,
-             ["White Level", "Black Level", "Done", "Back"],
+             ["White Level", "Black Level", "Start Game", "Back"],
              menu_channel);
 }
 
@@ -190,56 +218,9 @@ handleAIControlResponse(string message) {
         setSimulatingMode(TRUE);
         llRegionSayTo(menu_user, 0, "AI vs AI mode activated");
         
-        if (simulating) {
-            llOwnerSay("DEBUG: In simulating branch for Both AI");
-            gWhiteAI = TRUE;
-            gBlackAI = TRUE;
-            
-            // Update menu state
-            whitePlayer = NULL_KEY;
-            blackPlayer = NULL_KEY;
-            
-            llOwnerSay("DEBUG: Sending SET_PLAYER_KEYS to UI");
-            llMessageLinked(LINK_SET, 0, "SET_PLAYER_KEYS|" + (string)NULL_KEY + "|" + (string)NULL_KEY, NULL_KEY);
-            
-            // Update core with AI players
-            llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|white|" + (string)NULL_KEY, NULL_KEY);
-            llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|black|" + (string)NULL_KEY, NULL_KEY);
-            
-            // Update menu state
-            llMessageLinked(LINK_SET, 0, "UPDATE_GAME_STATE|" + currentTurn + "|" + (string)currentDie1 + "|" + (string)currentDie2 + "|" + (string)NULL_KEY + "|" + (string)NULL_KEY + "|" + (string)simulating, NULL_KEY);
-            
-            llOwnerSay("DEBUG: Both players set to AI - UI keys should be NULL");
-            
-            // Auto-start the game for AI vs AI
-            llSleep(2.0);
-            llMessageLinked(LINK_SET, 0, "START_FIRST_ROLL", NULL_KEY);
-        } else {
-            llOwnerSay("DEBUG: In non-simulating branch for Both AI");
-            
-            // Update menu state
-            whitePlayer = NULL_KEY;
-            blackPlayer = NULL_KEY;
-            
-            // Send SET_PLAYER_KEYS to update UI script's player keys
-            llOwnerSay("DEBUG: Sending SET_PLAYER_KEYS to UI (non-simulating)");
-            llMessageLinked(LINK_SET, 0, "SET_PLAYER_KEYS|" + (string)NULL_KEY + "|" + (string)NULL_KEY, NULL_KEY);
-            
-            // Update core with AI players
-            llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|white|" + (string)NULL_KEY, NULL_KEY);
-            llMessageLinked(LINK_SET, 0, "PLAYER_JOIN|black|" + (string)NULL_KEY, NULL_KEY);
-            
-            // Update menu state
-            llMessageLinked(LINK_SET, 0, "UPDATE_GAME_STATE|" + currentTurn + "|" + (string)currentDie1 + "|" + (string)currentDie2 + "|" + (string)NULL_KEY + "|" + (string)NULL_KEY + "|" + (string)simulating, NULL_KEY);
-            
-            llRegionSayTo(menu_user, 0, "Both set to AI");
-            
-            // Auto-start the game for AI vs AI
-            llSleep(2.0);
-            llMessageLinked(LINK_SET, 0, "START_FIRST_ROLL", NULL_KEY);
-            
-            llOwnerSay("DEBUG: Both players set to AI in non-simulating mode");
-        }
+        setSimulatingMode(TRUE);
+        // Don't start yet - ask for levels first
+        showAILevelMenu("both");
     }
     else if (message == "White AI") {
         MASTER_WHITE_AI = TRUE;
@@ -282,10 +263,7 @@ handleAIControlResponse(string message) {
     
     // Show AI level menu based on selection
     if (message == "Both AI") {
-        // Don't show menu now - game auto-starts
-        // Close menu cleanly
-        llListenRemove(menu_listener);
-        llSetTimerEvent(0.0);
+        // Already handled above
     } else if (message == "White AI") {
         // Show White AI level menu
         showAILevelMenu("white");
@@ -352,17 +330,17 @@ handleMenuResponse(string message) {
         broadcastControlState();
         
         if (gMenuContext == "both") {
-            // If setting both, we are done
-             showMainMenu(menu_user);
+            // If setting both via simple menu, we are done -> Start Game
+            startAIGame();
         } else {
             // If setting individually via "Different Levels" flow, return to that menu
-            // But wait, gMenuContext is "white" or "black". 
-            // If we came from "Different Levels", we want to go back there.
-            // Let's check if we are in the middle of a "Different Levels" flow?
-            // For simplicity, just go back to Main Menu for now, or Different Levels menu if we can track it.
-            // Actually, if we are setting one, we might want to set the other.
-            // Let's go to Main Menu for now to be safe and simple.
-            showMainMenu(menu_user);
+            // Check if we are in "Different Levels" mode? 
+            // We can infer it if gMenuContext is white/black but we want to go back to "Different Levels"
+            // For now, if we just set one, let's go back to Different Levels menu if that was the path.
+            // Simplified: Always go to Different Levels menu if context was single, 
+            // OR if we want to be smart, we need a separate state.
+            // Let's just show the Different Levels menu again to confirm/set other.
+            showDifferentLevelsMenu();
         }
     }
     else if (message == "Different Levels") {
@@ -374,8 +352,8 @@ handleMenuResponse(string message) {
     else if (message == "Black Level") {
         showAILevelMenu("black");
     }
-    else if (message == "Done") {
-        showMainMenu(menu_user);
+    else if (message == "Start Game") {
+        startAIGame();
     }
     
     // Legacy handlers removal (AI: Off etc) - replaced by above generic handler
