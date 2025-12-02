@@ -447,7 +447,11 @@ default {
             
             if (simulating) {
                 if ((checkTurn == "white" && gWhiteAI) || (checkTurn == "black" && gBlackAI)) {
-                    if (AI_LEVEL > 0) {
+                    integer currentLevel = 0;
+                    if (checkTurn == "white") currentLevel = WHITE_AI_LEVEL;
+                    else if (checkTurn == "black") currentLevel = BLACK_AI_LEVEL;
+                    
+                    if (currentLevel > 0) {
                         llSleep(2.0);
                         llMessageLinked(LINK_SET, 0, "AI_REQUEST_MOVE", NULL_KEY);
                     }
