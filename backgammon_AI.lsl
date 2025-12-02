@@ -1,6 +1,8 @@
 // BACKGAMMON AI MAIN (PUPPET) - Interface
 integer DEBUG_MODE = TRUE;
-integer AI_LEVEL = 1;
+integer AI_LEVEL = 1; // Fallback
+integer gWhiteAILevel = 1;
+integer gBlackAILevel = 1;
 
 // Player keys to track who is AI
 key white = NULL_KEY;
@@ -10,6 +12,8 @@ key black = NULL_KEY;
 integer AI_WHITE_CONTROLLED = FALSE;
 integer AI_BLACK_CONTROLLED = FALSE;
 integer AI_CONTROL_LEVEL = 1;
+integer AI_WHITE_LEVEL = 1;
+integer AI_BLACK_LEVEL = 1;
 
 // AI STATE MACHINE
 integer AI_STATE_IDLE = 0;
@@ -47,17 +51,31 @@ default {
                 AI_BLACK_CONTROLLED = (integer)stateValue;
                 if (DEBUG_MODE) llOwnerSay("DEBUG AI: Black controlled = " + stateValue);
             }
-            else if (stateType == "AI_LEVEL") {
-                AI_CONTROL_LEVEL = (integer)stateValue;
-                AI_LEVEL = AI_CONTROL_LEVEL;
-                // Forward level to Brain
-                llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|" + (string)AI_LEVEL, NULL_KEY);
+            else if (stateType == "WHITE_AI_LEVEL") {
+                AI_WHITE_LEVEL = (integer)stateValue;
+                gWhiteAILevel = AI_WHITE_LEVEL;
+                // Forward to Brain
+                llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|white|" + (string)gWhiteAILevel, NULL_KEY);
+            }
+            else if (stateType == "BLACK_AI_LEVEL") {
+                AI_BLACK_LEVEL = (integer)stateValue;
+                gBlackAILevel = AI_BLACK_LEVEL;
+                // Forward to Brain
+                llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|black|" + (string)gBlackAILevel, NULL_KEY);
             }
             return;
         }
         else if (command == "SET_AI_LEVEL") {
-            AI_LEVEL = llList2Integer(params, 1);
-            if (DEBUG_MODE) llOwnerSay("DEBUG AI: AI Level set to " + (string)AI_LEVEL);
+            string player = llList2String(params, 1);
+            integer level = llList2Integer(params, 2);
+            
+            if (player == "white") {
+                gWhiteAILevel = level;
+                if (DEBUG_MODE) llOwnerSay("DEBUG AI: White AI Level set to " + (string)level);
+            } else if (player == "black") {
+                gBlackAILevel = level;
+                if (DEBUG_MODE) llOwnerSay("DEBUG AI: Black AI Level set to " + (string)level);
+            }
         }
         else if (command == "SET_PLAYER_KEYS") {
             white = (key)llList2String(params, 1);
@@ -94,8 +112,13 @@ default {
                 
                 // 2. Trigger Brain to Think
                 gAIState = AI_STATE_THINKING;
+                
+                // Determine correct level for this turn
+                integer currentLevel = gWhiteAILevel;
+                if (currentTurn == "black") currentLevel = gBlackAILevel;
+                
                 string thinkMsg = "AI_THINK|" + currentTurn + "|" + (string)currentDie1 + "|" + 
-                                  (string)currentDie2 + "|" + (string)isDoubles + "|" + (string)movesLeft;
+                                  (string)currentDie2 + "|" + (string)isDoubles + "|" + (string)movesLeft + "|" + (string)currentLevel;
                 llMessageLinked(LINK_SET, 0, thinkMsg, NULL_KEY);
             }
         }

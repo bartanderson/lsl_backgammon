@@ -1,54 +1,8 @@
-# Final Verification Tasks
+# Backgammon AI Implementation
 
-- [x] **Restore Environment**
-    - [x] Create `DEVELOPMENT_GUIDELINES.md`
-    - [x] Create `.agent/PRE_EDIT_CHECKLIST.md`
-- [x] **Implement Fixes**
-    - [x] Update `backgammon_core.lsl` (First Roll Logic + Endgame Fix)
-    - [x] Update `backgammon_ui.lsl` (First Roll Chat Fix)
-    - [x] Consolidate duplicate handlers in `backgammon_ui.lsl`
-    - [x] Update `backgammon_render.lsl` (Dice Visual Fix)
-    - [x] Commit changes to git
-- [x] **Verify Fixes**
-    - [x] User uploads files and runs AI vs AI test
-    - [x] Analyze `log_input.txt` (and subsequent logs) for:
-        - [x] Correct First Roll (Winner uses own die + loser's die)
-        - [x] Correct Dice Visuals (Single die for first roll)
-        - [x] Immediate Game Over (No extra turns)
-        - [x] No "Invalid" or "Error" messages
-        - [x] **Ghosting Fix**: Verified `updateLocalBoard` in `log4.txt`
-        - [x] **AI Combined Moves**: Verified no invalid jumps in `log4.txt` using `verify_moves_v2.py`
-- [x] **Test 2: Human Play - Move Visualization**
-    - [x] Implement multi-marker system for move visualization
-    - [x] Update `backgammon_ui.lsl` to show multiple silver markers
-    - [x] Update `backgammon_render.lsl` to handle bear-off markers
-    - [x] Add bear-off click detection logic
-    - [ ] User uploads and tests in Second Life
-    - [ ] Reset Board
-    - [ ] Sit as Human
-    - [ ] Roll Dice
-    - [ ] Select Piece -> Verify Gold + Silver Markers appear
-    - [ ] Click Marker -> Verify Piece moves
-    - [x] Test bear-off marker functionality
-- [x] **Fix Missing Handler**
-    - [x] Implement `GET_PIECE_POSITION` in `backgammon_core.lsl`
-- [x] **Improve First Roll Visuals**
-    - [x] Add `DICE_ROLL` handler to `backgammon_render.lsl`
-    - [x] Add 3s delay to `backgammon_core.lsl`
-- [x] **Fix Marker Colors**
-    - [x] Add `goldMarkerLink` to `backgammon_render.lsl`
-    - [x] Correct marker mapping (Gold=Source, Silver=Dest)
-- [x] **Fix Syntax Error**
-    - [x] Repair corrupted code block in `backgammon_render.lsl` (lines 357-383)
-    - [x] Restore `state_entry` and `link_message` integrity
-- [x] **Fix Duplicate Die Display**
-    - [x] Add return after `handle FirstRollPhase` in `backgammon_core.lsl`
-    - [x] Remove extra closing brace on line 763
-    - [x] Fix UI to roll only only ONE die during first roll (removed die2 conditional)
-    - [x] Fix PLAYER_JOIN in `backgammon_core.lsl` to roll only one die (consistency fix)
-    - [x] Fix `silver2` visibility (added `hideMarker(3)` to render init/reset and UI handlers)
-    - [x] Implement marker click detection (added click handlers for `silver1`, `silver2`, `gold` in UI)
-    - [x] Fix second move not offered (added `DICE_REMAINING` message from Core to UI)
-
-
-
+- [x] **AI Architecture Redesign**
+    - [x] Design "Puppet & Brain" distributed architecture
+    - [x] Create `backgammon_AI.lsl` (Puppet/Interface)
+    - [x] Create `backgammon_AI_brain.lsl` (Brain/Logic)
+    - [ ] Tune scoring weights
+    - [ ] Optimize memory usage if needed

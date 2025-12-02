@@ -6,9 +6,11 @@ integer menu_listener;
 integer menu_channel;
 key menu_user;
 integer menu_timeout = 30;
+string gMenuContext = ""; // Tracks "white", "black", or "both" for level setting
 
 // AI Control
-integer AI_LEVEL = 0;
+integer WHITE_AI_LEVEL = 1;
+integer BLACK_AI_LEVEL = 1;
 integer gWhiteAI = FALSE;
 integer gBlackAI = FALSE;
 
@@ -26,7 +28,8 @@ key blackPlayer = NULL_KEY;
 integer MASTER_SIMULATING = FALSE;
 integer MASTER_WHITE_AI = FALSE;
 integer MASTER_BLACK_AI = FALSE;
-integer MASTER_AI_LEVEL = 1;
+integer MASTER_WHITE_AI_LEVEL = 1;
+integer MASTER_BLACK_AI_LEVEL = 1;
 
 
 // Broadcast master state to all scripts
@@ -36,7 +39,8 @@ broadcastControlState() {
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|SIMULATING|" + (string)MASTER_SIMULATING, NULL_KEY);
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|WHITE_AI|" + (string)MASTER_WHITE_AI, NULL_KEY);
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|BLACK_AI|" + (string)MASTER_BLACK_AI, NULL_KEY);
-    llMessageLinked(LINK_SET, 0, "CONTROL_STATE|AI_LEVEL|" + (string)MASTER_AI_LEVEL, NULL_KEY);
+    llMessageLinked(LINK_SET, 0, "CONTROL_STATE|WHITE_AI_LEVEL|" + (string)MASTER_WHITE_AI_LEVEL, NULL_KEY);
+    llMessageLinked(LINK_SET, 0, "CONTROL_STATE|BLACK_AI_LEVEL|" + (string)MASTER_BLACK_AI_LEVEL, NULL_KEY);
 
 }
 
@@ -47,7 +51,8 @@ masterReset() {
     MASTER_SIMULATING = FALSE;
     MASTER_WHITE_AI = FALSE;
     MASTER_BLACK_AI = FALSE;
-    MASTER_AI_LEVEL = 1;
+    MASTER_WHITE_AI_LEVEL = 1;
+    MASTER_BLACK_AI_LEVEL = 1;
 
     
     // Broadcast reset state
@@ -68,13 +73,16 @@ setSimulatingMode(integer enable) {
     broadcastControlState();
 }
 
+string getLevelName(integer level) {
+    if (level == 0) return "Off";
+    if (level == 1) return "Beginner";
+    if (level == 2) return "Intermediate";
+    if (level == 3) return "Advanced";
+    return "Unknown";
+}
+
 showMainMenu(key user) {
     menu_user = user;
-    
-    string aiLevelText = "Off";
-    if (AI_LEVEL == 1) aiLevelText = "Beginner";
-    else if (AI_LEVEL == 2) aiLevelText = "Intermediate"; 
-    else if (AI_LEVEL == 3) aiLevelText = "Advanced";
     
     string aiControlText = "Humans: Both";
     if (whitePlayer == NULL_KEY && blackPlayer == NULL_KEY) {
@@ -90,20 +98,53 @@ showMainMenu(key user) {
     
     string menuText = "Backgammon Menu\nTurn: " + currentTurn;
     menuText = menuText + "\nDice: " + (string)currentDie1 + "," + (string)currentDie2;
-    menuText = menuText + "\nAI: " + aiLevelText;
     menuText = menuText + "\nControl: " + aiControlText;
     
-    list buttons = ["Reset", "AI Level", "AI Control", "Cancel"];
+    // Show AI levels if any AI is active
+    if (WHITE_AI_LEVEL > 0 || BLACK_AI_LEVEL > 0) {
+        menuText += "\nWhite: " + getLevelName(WHITE_AI_LEVEL);
+        menuText += "\nBlack: " + getLevelName(BLACK_AI_LEVEL);
+    }
+    
+    list buttons = ["AI Control", "Reset", "Cancel"];
     
     llDialog(user, menuText, buttons, menu_channel);
     llSetTimerEvent(menu_timeout);
 }
 
-showAILevelMenu() {
+showAILevelMenu(string context) {
+    gMenuContext = context;
     menu_channel = (integer)(llFrand(99999.0) * -1);
     menu_listener = llListen(menu_channel, "", menu_user, "");
-    llDialog(menu_user, "Select AI Level:", 
-             ["AI: Off", "AI: Beginner", "AI: Intermediate", "AI: Advanced", "Back"], menu_channel);
+    
+    string prompt = "Select AI Level:";
+    if (context == "white") {
+        prompt = "White AI Level:";
+    } else if (context == "black") {
+        prompt = "Black AI Level:";
+    } else if (context == "both") {
+        prompt = "Both AI Level:";
+    }
+    
+    list buttons = ["Beginner", "Intermediate", "Advanced", "Back"];
+    if (context == "both") {
+        buttons = ["Beginner", "Intermediate", "Advanced", "Different Levels", "Back"];
+    }
+    
+    llDialog(menu_user, prompt, buttons, menu_channel);
+}
+
+showDifferentLevelsMenu() {
+    menu_channel = (integer)(llFrand(99999.0) * -1);
+    menu_listener = llListen(menu_channel, "", menu_user, "");
+    
+    string prompt = "Set Levels Separately";
+    prompt += "\nWhite: " + getLevelName(WHITE_AI_LEVEL);
+    prompt += "\nBlack: " + getLevelName(BLACK_AI_LEVEL);
+    
+    llDialog(menu_user, prompt,
+             ["White Level", "Black Level", "Done", "Back"],
+             menu_channel);
 }
 
 showAIControlMenu() {
@@ -239,13 +280,21 @@ handleAIControlResponse(string message) {
         return;
     }
     
-    // Close menu cleanly for Both AI (game auto-starts)
-    // Reopen menu for other options where user may want to continue
-    if (message != "Both AI") {
-        showMainMenu(menu_user);
-    } else {
+    // Show AI level menu based on selection
+    if (message == "Both AI") {
+        // Don't show menu now - game auto-starts
+        // Close menu cleanly
         llListenRemove(menu_listener);
         llSetTimerEvent(0.0);
+    } else if (message == "White AI") {
+        // Show White AI level menu
+        showAILevelMenu("white");
+    } else if (message == "Black AI") {
+        // Show Black AI level menu
+        showAILevelMenu("black");
+    } else if (message == "Both Human") {
+        // No AI levels needed
+        showMainMenu(menu_user);
     }
 }
 
@@ -271,42 +320,72 @@ handleMenuResponse(string message) {
         llSetTimerEvent(60.0);
     }
     else if (message == "AI Level") {
-        showAILevelMenu();
+        // Deprecated button, but if hit, show for both? 
+        // Or just remove this block if button is gone.
+        // Keeping for safety, default to both
+        showAILevelMenu("both");
     }
     else if (message == "AI Control") {
         showAIControlMenu();
     }
-
+    
+    // Level Selection Handlers
+    else if (message == "Beginner" || message == "Intermediate" || message == "Advanced") {
+        integer newLevel = 1;
+        if (message == "Intermediate") newLevel = 2;
+        if (message == "Advanced") newLevel = 3;
+        
+        if (gMenuContext == "white" || gMenuContext == "both") {
+            WHITE_AI_LEVEL = newLevel;
+            MASTER_WHITE_AI_LEVEL = newLevel;
+            llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|white|" + (string)newLevel, NULL_KEY);
+            llRegionSayTo(menu_user, 0, "White AI set to " + message);
+        }
+        
+        if (gMenuContext == "black" || gMenuContext == "both") {
+            BLACK_AI_LEVEL = newLevel;
+            MASTER_BLACK_AI_LEVEL = newLevel;
+            llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|black|" + (string)newLevel, NULL_KEY);
+            llRegionSayTo(menu_user, 0, "Black AI set to " + message);
+        }
+        
+        broadcastControlState();
+        
+        if (gMenuContext == "both") {
+            // If setting both, we are done
+             showMainMenu(menu_user);
+        } else {
+            // If setting individually via "Different Levels" flow, return to that menu
+            // But wait, gMenuContext is "white" or "black". 
+            // If we came from "Different Levels", we want to go back there.
+            // Let's check if we are in the middle of a "Different Levels" flow?
+            // For simplicity, just go back to Main Menu for now, or Different Levels menu if we can track it.
+            // Actually, if we are setting one, we might want to set the other.
+            // Let's go to Main Menu for now to be safe and simple.
+            showMainMenu(menu_user);
+        }
+    }
+    else if (message == "Different Levels") {
+        showDifferentLevelsMenu();
+    }
+    else if (message == "White Level") {
+        showAILevelMenu("white");
+    }
+    else if (message == "Black Level") {
+        showAILevelMenu("black");
+    }
+    else if (message == "Done") {
+        showMainMenu(menu_user);
+    }
+    
+    // Legacy handlers removal (AI: Off etc) - replaced by above generic handler
     else if (message == "AI: Off") {
-        AI_LEVEL = 0;
-        MASTER_AI_LEVEL = 0;
+        // ... legacy code removal ...
+        WHITE_AI_LEVEL = 0; BLACK_AI_LEVEL = 0;
+        MASTER_WHITE_AI_LEVEL = 0; MASTER_BLACK_AI_LEVEL = 0;
         broadcastControlState();
-        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|0", NULL_KEY);
-        llRegionSayTo(menu_user, 0, "AI disabled");
-        showMainMenu(menu_user);
-    }
-    else if (message == "AI: Beginner") {
-        AI_LEVEL = 1;
-        MASTER_AI_LEVEL = 1;
-        broadcastControlState();
-        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|1", NULL_KEY);
-        llRegionSayTo(menu_user, 0, "AI set to Beginner level");
-        showMainMenu(menu_user);
-    }
-    else if (message == "AI: Intermediate") {
-        AI_LEVEL = 2;
-        MASTER_AI_LEVEL = 2;
-        broadcastControlState();
-        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|2", NULL_KEY);
-        llRegionSayTo(menu_user, 0, "AI set to Intermediate level");
-        showMainMenu(menu_user);
-    }
-    else if (message == "AI: Advanced") {
-        AI_LEVEL = 3;
-        MASTER_AI_LEVEL = 3;
-        broadcastControlState();
-        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|3", NULL_KEY);
-        llRegionSayTo(menu_user, 0, "AI set to Advanced level");
+        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|white|0", NULL_KEY);
+        llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|black|0", NULL_KEY);
         showMainMenu(menu_user);
     }
     else if (message == "Cancel") {

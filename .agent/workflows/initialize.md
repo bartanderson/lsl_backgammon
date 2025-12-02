@@ -13,37 +13,20 @@ Get-Content task.md  # In root directory
 Review what was in progress.
 
 ## Step 2: Review Critical Guidelines
-1. Read `DEVELOPMENT_GUIDELINES.md` - **ALL .lsl files MUST use safe_edit.py**
+1. Read `DEVELOPMENT_GUIDELINES.md` - **Strictly follow the Safety Protocol**
 2. Read `.agent/PRE_EDIT_CHECKLIST.md` - Pre-edit checklist
+3. Read `.agent/AGENT_RULES.md` - **MANDATORY Agent Rules**
 
-## Step 3: Verify Tools Are Available
-```powershell
-Test-Path .agent/tools/safe_edit.py
-```
-If False, restore from git:
-```powershell
-git checkout HEAD -- .agent/tools/safe_edit.py
-```
-
-## Step 4: Check Git Status
+## Step 3: Check Git Status
 ```powershell
 git status
 git log --oneline -5
 ```
 
-## Step 5: Review Recent Bugs
+## Step 4: Review Recent Bugs
 ```powershell
 Get-Content BUGS_TRACKER.md
 ```
-
-## Critical Rules Reminder
-- **ALL .lsl files**: Use standard tools with MANDATORY post-edit verification
-- Commit immediately after successful edits (THE REAL SAFETY NET)
-- LSL: Use `llParseStringKeepNulls` not `llParseString2List`
-- **PowerShell**:
-  - Use `Remove-Item` instead of `rm`
-  - Use `Select-String` instead of `grep`
-  - Use `Get-Content` instead of `cat`
 
 ## Available Log Analysis Tools
 When debugging game logs, remember these tools exist:
