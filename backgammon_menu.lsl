@@ -12,9 +12,7 @@ integer AI_LEVEL = 0;
 integer gWhiteAI = FALSE;
 integer gBlackAI = FALSE;
 
-// Pause system  
-integer gGamePaused = FALSE;
-integer gPauseMenuActive = FALSE;
+// Pause system removed - unnecessary for turn-based game
 
 // Game state from UI
 string currentTurn = "";
@@ -29,7 +27,7 @@ integer MASTER_SIMULATING = FALSE;
 integer MASTER_WHITE_AI = FALSE;
 integer MASTER_BLACK_AI = FALSE;
 integer MASTER_AI_LEVEL = 1;
-integer MASTER_GAME_PAUSED = FALSE;
+
 
 // Broadcast master state to all scripts
 broadcastControlState() {
@@ -39,7 +37,7 @@ broadcastControlState() {
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|WHITE_AI|" + (string)MASTER_WHITE_AI, NULL_KEY);
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|BLACK_AI|" + (string)MASTER_BLACK_AI, NULL_KEY);
     llMessageLinked(LINK_SET, 0, "CONTROL_STATE|AI_LEVEL|" + (string)MASTER_AI_LEVEL, NULL_KEY);
-    llMessageLinked(LINK_SET, 0, "CONTROL_STATE|PAUSED|" + (string)MASTER_GAME_PAUSED, NULL_KEY);
+
 }
 
 // Reset entire system to known state
@@ -50,7 +48,7 @@ masterReset() {
     MASTER_WHITE_AI = FALSE;
     MASTER_BLACK_AI = FALSE;
     MASTER_AI_LEVEL = 1;
-    MASTER_GAME_PAUSED = FALSE;
+
     
     // Broadcast reset state
     broadcastControlState();
@@ -87,11 +85,6 @@ showMainMenu(key user) {
         aiControlText = "AI: Black";
     }
     
-    string pauseText = "Pause Game";
-    if (gGamePaused) {
-        pauseText = "Resume Game";
-    }
-    
     menu_channel = (integer)(llFrand(99999.0) * -1);
     menu_listener = llListen(menu_channel, "", user, "");
     
@@ -99,11 +92,8 @@ showMainMenu(key user) {
     menuText = menuText + "\nDice: " + (string)currentDie1 + "," + (string)currentDie2;
     menuText = menuText + "\nAI: " + aiLevelText;
     menuText = menuText + "\nControl: " + aiControlText;
-    if (gGamePaused) {
-        menuText = menuText + "\n[PAUSED]";
-    }
     
-    list buttons = ["Reset", "Save", "Load", "AI Level", "AI Control", pauseText, "Cancel"];
+    list buttons = ["Reset", "AI Level", "AI Control", "Cancel"];
     
     llDialog(user, menuText, buttons, menu_channel);
     llSetTimerEvent(menu_timeout);
@@ -134,29 +124,7 @@ showAIControlMenu() {
              ["Both Human", "Both AI", "White AI", "Black AI", "Back"], menu_channel);
 }
 
-showPauseMenu() {
-    string statusText = "Game Paused";
-    if (simulating) {
-        statusText = statusText + "\nSim: ";
-        if (gWhiteAI) {
-            statusText = statusText + "W-AI";
-        } else {
-            statusText = statusText + "W-You";
-        }
-        statusText = statusText + "/";
-        if (gBlackAI) {
-            statusText = statusText + "B-AI";
-        } else {
-            statusText = statusText + "B-You";
-        }
-    }
-    
-    menu_channel = (integer)(llFrand(99999.0) * -1);
-    menu_listener = llListen(menu_channel, "", menu_user, "");
-    
-    list buttons = ["Resume", "Main Menu", "Switch White", "Switch Black", "AI vs AI", "I Play Both", "Cancel"];
-    llDialog(menu_user, statusText, buttons, menu_channel);
-}
+// showPauseMenu removed - pause functionality eliminated
 
 handleAIControlResponse(string message) {
     llOwnerSay("DEBUG: handleAIControlResponse: " + message + ", simulating: " + (string)simulating);
@@ -271,94 +239,17 @@ handleAIControlResponse(string message) {
         return;
     }
     
-    showMainMenu(menu_user);
+    // Close menu cleanly for Both AI (game auto-starts)
+    // Reopen menu for other options where user may want to continue
+    if (message != "Both AI") {
+        showMainMenu(menu_user);
+    } else {
+        llListenRemove(menu_listener);
+        llSetTimerEvent(0.0);
+    }
 }
 
-handlePauseMenuResponse(string message) {
-    if (message == "Resume") {
-        gGamePaused = FALSE;
-        gPauseMenuActive = FALSE;
-        MASTER_GAME_PAUSED = FALSE;
-        broadcastControlState();
-        llRegionSayTo(menu_user, 0, "Game resumed.");
-        
-        integer whiteIsAI = FALSE;
-        if (whitePlayer == NULL_KEY || gWhiteAI) {
-            whiteIsAI = TRUE;
-        }
-        integer blackIsAI = FALSE;
-        if (blackPlayer == NULL_KEY || gBlackAI) {
-            blackIsAI = TRUE;
-        }
-        
-        if ((currentTurn == "white" && whiteIsAI) || (currentTurn == "black" && blackIsAI)) {
-            llSleep(1.0);
-            llMessageLinked(LINK_SET, 0, "TRIGGER_AI_NOW", NULL_KEY);
-        }
-        
-        showMainMenu(menu_user);
-    }
-    else if (message == "Main Menu") {
-        gPauseMenuActive = FALSE;
-        showMainMenu(menu_user);
-    }
-    else if (message == "Switch White") {
-        if (simulating) {
-            gWhiteAI = !gWhiteAI;
-            MASTER_WHITE_AI = gWhiteAI;
-            broadcastControlState();
-            string status = "You";
-            if (gWhiteAI) {
-                status = "AI";
-            }
-            llRegionSayTo(menu_user, 0, "White now: " + status);
-            showPauseMenu();
-        }
-    }
-    else if (message == "Switch Black") {
-        if (simulating) {
-            gBlackAI = !gBlackAI;
-            MASTER_BLACK_AI = gBlackAI;
-            broadcastControlState();
-            string status = "You";
-            if (gBlackAI) {
-                status = "AI";
-            }
-            llRegionSayTo(menu_user, 0, "Black now: " + status);
-            showPauseMenu();
-        }
-    }
-    else if (message == "AI vs AI") {
-        if (simulating) {
-            gWhiteAI = TRUE;
-            gBlackAI = TRUE;
-            MASTER_WHITE_AI = TRUE;
-            MASTER_BLACK_AI = TRUE;
-            broadcastControlState();
-            llRegionSayTo(menu_user, 0, "AI vs AI mode - game will play automatically");
-            
-            if ((currentTurn == "white" && gWhiteAI) || (currentTurn == "black" && gBlackAI)) {
-                llMessageLinked(LINK_SET, 0, "TRIGGER_AI_NOW", NULL_KEY);
-            }
-            
-            showPauseMenu();
-        }
-    }
-    else if (message == "I Play Both") {
-        if (simulating) {
-            gWhiteAI = FALSE;
-            gBlackAI = FALSE;
-            MASTER_WHITE_AI = FALSE;
-            MASTER_BLACK_AI = FALSE;
-            broadcastControlState();
-            llRegionSayTo(menu_user, 0, "You are now playing both sides");
-            showPauseMenu();
-        }
-    }
-    else if (message == "Cancel") {
-        showPauseMenu();
-    }
-}
+// handlePauseMenuResponse removed - pause functionality eliminated
 
 handleMenuResponse(string message) {
     llListenRemove(menu_listener);
@@ -385,37 +276,7 @@ handleMenuResponse(string message) {
     else if (message == "AI Control") {
         showAIControlMenu();
     }
-    else if (message == "Pause Game") {
-        gGamePaused = TRUE;
-        gPauseMenuActive = TRUE;
-        MASTER_GAME_PAUSED = TRUE;
-        broadcastControlState();
-        llRegionSayTo(menu_user, 0, "Game paused. Use menu to resume.");
-        showPauseMenu();
-    }
-    else if (message == "Resume Game") {
-        gGamePaused = FALSE;
-        gPauseMenuActive = FALSE;
-        MASTER_GAME_PAUSED = FALSE;
-        broadcastControlState();
-        llRegionSayTo(menu_user, 0, "Game resumed.");
-        
-        integer whiteIsAI = FALSE;
-        if (whitePlayer == NULL_KEY || gWhiteAI) {
-            whiteIsAI = TRUE;
-        }
-        integer blackIsAI = FALSE;
-        if (blackPlayer == NULL_KEY || gBlackAI) {
-            blackIsAI = TRUE;
-        }
-        
-        if ((currentTurn == "white" && whiteIsAI) || (currentTurn == "black" && blackIsAI)) {
-            llSleep(1.0);
-            llMessageLinked(LINK_SET, 0, "TRIGGER_AI_NOW", NULL_KEY);
-        }
-        
-        showMainMenu(menu_user);
-    }
+
     else if (message == "AI: Off") {
         AI_LEVEL = 0;
         MASTER_AI_LEVEL = 0;
@@ -486,9 +347,7 @@ default {
             else if (llListFindList(["Both Human", "Both AI", "White AI", "Black AI", "Swap"], [message]) != -1) {
                 handleAIControlResponse(message);
             }
-            else if (gPauseMenuActive) {
-                handlePauseMenuResponse(message);
-            }
+
             else {
                 handleMenuResponse(message);
             }
@@ -529,7 +388,7 @@ default {
         else if (command == "CHECK_AI_FOR_TURN") {
             string checkTurn = llList2String(params, 1);
             
-            if (simulating && !gGamePaused) {
+            if (simulating) {
                 if ((checkTurn == "white" && gWhiteAI) || (checkTurn == "black" && gBlackAI)) {
                     if (AI_LEVEL > 0) {
                         llSleep(2.0);
@@ -539,12 +398,10 @@ default {
             }
         }
         else if (command == "CHECK_PAUSE_STATE") {
-            if (!gGamePaused) {
-                if ((currentTurn == "white" && (whitePlayer == NULL_KEY || gWhiteAI)) || 
-                    (currentTurn == "black" && (blackPlayer == NULL_KEY || gBlackAI))) {
-                    llSleep(2.0);
-                    llMessageLinked(LINK_SET, 0, "AI_REQUEST_MOVE", NULL_KEY);
-                }
+            if ((currentTurn == "white" && (whitePlayer == NULL_KEY || gWhiteAI)) || 
+                (currentTurn == "black" && (blackPlayer == NULL_KEY || gBlackAI))) {
+                llSleep(2.0);
+                llMessageLinked(LINK_SET, 0, "AI_REQUEST_MOVE", NULL_KEY);
             }
         }
     }
