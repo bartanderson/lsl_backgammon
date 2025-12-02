@@ -277,34 +277,43 @@ integer isValidBearOff(integer from_point, integer die_value, integer color) {
         requiredDistance = from_point + 1;
     }
     
-    // Exact match or overshoot is always valid
-    if (die_value >= requiredDistance) {
+    // Exact match is always valid
+    if (die_value == requiredDistance) {
         return TRUE;
     }
     
-    // For undershoot: check if there are pieces requiring larger dice
-    string playerColor = "w";
-    if (color == 1) playerColor = "b";
-    
-    if (color == 0) { // White
-        integer i;
-        for (i = from_point + 1; i <= WHITE_HOME_END; i++) {
-            string point = llList2String(BoardList, i);
-            if (point != "" && llSubStringIndex(point, playerColor) != -1) {
-                return FALSE;
+    // Overshoot: Die is larger than required.
+    // Valid ONLY if there are no pieces at points further away from the bear-off edge.
+    if (die_value > requiredDistance) {
+        string playerColor = "w";
+        if (color == 1) playerColor = "b";
+        
+        if (color == 0) { // White (Home 18-23)
+            // Check points further away: from WHITE_HOME_START (18) up to from_point - 1
+            integer i;
+            for (i = WHITE_HOME_START; i < from_point; i++) {
+                string point = llList2String(BoardList, i);
+                if (point != "" && llSubStringIndex(point, playerColor) != -1) {
+                    return FALSE; // Found a piece further away
+                }
             }
-        }
-    } else { // Black
-        integer i;
-        for (i = from_point + 1; i <= BLACK_HOME_START; i++) {
-            string point = llList2String(BoardList, i);
-            if (point != "" && llSubStringIndex(point, playerColor) != -1) {
-                return FALSE;
+            return TRUE;
+        } else { // Black (Home 5-0)
+            // Check points further away: from from_point + 1 up to BLACK_HOME_START (5)
+            integer i;
+            for (i = from_point + 1; i <= BLACK_HOME_START; i++) {
+                string point = llList2String(BoardList, i);
+                if (point != "" && llSubStringIndex(point, playerColor) != -1) {
+                    return FALSE; // Found a piece further away
+                }
             }
+            return TRUE;
         }
     }
     
-    return TRUE;
+    // Undershoot: Die is smaller than required.
+    // Never valid for bear-off (must move forward within board).
+    return FALSE;
 }
 
 integer mustBearOff(integer color) {
