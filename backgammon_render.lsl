@@ -11,7 +11,6 @@ list faceRotations;
 
 integer silver1MarkerLink = -1;
 integer silver2MarkerLink = -1;
-integer silver2MarkerLink = -1;
 integer goldMarkerLink = -1;
 integer FROM_BAR = -2;
 
@@ -728,7 +727,6 @@ default {
              if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Game Over received - waiting 2s then storage");
              llSleep(2.0);
              resetToStorage();
-        }
         }
     }
 }
