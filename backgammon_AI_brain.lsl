@@ -30,6 +30,15 @@ integer BOARD_SIZE = 24;
 integer FROM_BAR = -2;
 integer BEAR_OFF = -1;
 
+// AI SCORING WEIGHTS
+integer W_BLOT = -60;          // Penalty for leaving a blot (vulnerable single piece)
+integer W_MADE_POINT = 40;     // Reward for making a point (secure stack)
+integer W_PRIME_FACTOR = 30;   // Reward per point in a consecutive prime
+integer W_ANCHOR = 50;         // Reward for holding an anchor in opponent's home
+integer W_BAR_SELF = -80;      // Penalty for having a piece on the bar
+integer W_BAR_OPP = 60;        // Reward for sending opponent to the bar (hitting)
+integer W_PIP_WEIGHT = 1;      // Multiplier for pip count difference
+
 string generateHomeBoardMove() {
     if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: generateHomeBoardMove for " + currentTurn);
     
@@ -672,8 +681,8 @@ integer evaluateBoard(list board, string playerColor) {
             string p = llGetSubString(content, 0, 0);
             if (p == playerColor) {
                 // Own piece
-                if (len == 1) score -= 50; // Blot (Vulnerable)
-                else if (len >= 2) score += 30; // Made Point
+                if (len == 1) score += W_BLOT; // Blot (Vulnerable)
+                else if (len >= 2) score += W_MADE_POINT; // Made Point
             }
         }
     }
@@ -691,12 +700,13 @@ integer evaluateBoard(list board, string playerColor) {
     integer ourPips = calculatePipCount(board, playerColor, ourBarList);
     integer oppPips = calculatePipCount(board, opponentColor, oppBarList);
     integer pipDiff = oppPips - ourPips;
-    if (pipDiff > 0) score += pipDiff / 2; // Winning race
-    else score += pipDiff / 3; // Losing race (less penalty)
+    // Positive pipDiff means we are ahead (our pips < opp pips)
+    if (pipDiff > 0) score += (pipDiff * W_PIP_WEIGHT) / 2; // Winning race
+    else score += (pipDiff * W_PIP_WEIGHT) / 3; // Losing race (less penalty)
     
     // 2. Prime Building (Consecutive Points)
     integer primeLength = countConsecutivePoints(board, playerColor);
-    score += primeLength * 25; // Strong primes block opponent
+    score += primeLength * W_PRIME_FACTOR; // Strong primes block opponent
     
     // 3. Anchor Control (Points in Opponent's Home)
     string oppTurnName;
@@ -721,11 +731,11 @@ integer evaluateBoard(list board, string playerColor) {
             if (isMadePoint(board, i, playerColor)) anchorCount++;
         }
     }
-    score += anchorCount * 35; // Defensive anchors
+    score += anchorCount * W_ANCHOR; // Defensive anchors
     
     // 4. Bar Penalty
-    score -= llGetListLength(ourBarList) * 60; // Heavy penalty for being on bar
-    score += llGetListLength(oppBarList) * 40; // Reward for hitting opponent
+    score += llGetListLength(ourBarList) * W_BAR_SELF; // Heavy penalty for being on bar
+    score += llGetListLength(oppBarList) * W_BAR_OPP; // Reward for hitting opponent
     
     return score;
 }
