@@ -905,7 +905,10 @@ default {
             integer die2 = llList2Integer(params, 3);
             
             if (gCurrentState == STATE_RESET || gCurrentState == STATE_FIRST_ROLL) {
-                if (gCurrentState == STATE_RESET) gCurrentState = STATE_FIRST_ROLL;
+                if (gCurrentState == STATE_RESET) {
+                    gCurrentState = STATE_FIRST_ROLL;
+                    llMessageLinked(LINK_SET, 0, "START_FIRST_ROLL", NULL_KEY);
+                }
                 handleFirstRollPhase(player, die1, die2);
                 return; // Exit to prevent processing in STATE_MAIN_GAME logic below
             }
