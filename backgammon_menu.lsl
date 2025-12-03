@@ -329,18 +329,18 @@ handleMenuResponse(string message) {
         
         broadcastControlState();
         
-        if (gMenuContext == "both") {
-            // If setting both via simple menu, we are done -> Start Game
-            startAIGame();
-        } else {
-            // If setting individually via "Different Levels" flow, return to that menu
-            // Check if we are in "Different Levels" mode? 
-            // We can infer it if gMenuContext is white/black but we want to go back to "Different Levels"
-            // For now, if we just set one, let's go back to Different Levels menu if that was the path.
-            // Simplified: Always go to Different Levels menu if context was single, 
-            // OR if we want to be smart, we need a separate state.
-            // Let's just show the Different Levels menu again to confirm/set other.
-            showDifferentLevelsMenu();
+        if (MASTER_SIMULATING) {
+            if (gMenuContext == "both") {
+                // "Both AI" mode, simple selection -> Start
+                startAIGame();
+            } else {
+                // "Different Levels" flow in AI vs AI
+                showDifferentLevelsMenu();
+            }
+        }
+        else {
+            // Human vs AI mode - just return to main menu
+            showMainMenu(menu_user);
         }
     }
     else if (message == "Different Levels") {
