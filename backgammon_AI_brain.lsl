@@ -1060,11 +1060,23 @@ default {
                 idx++;
             }
             BoardList = newBoard;
-            // Update bar and borne off lists
-            WhiteBarList = llParseString2List(llList2String(params, idx), [","], []); idx++;
-            BlackBarList = llParseString2List(llList2String(params, idx), [","], []); idx++;
-            WhiteBorneOff = llParseString2List(llList2String(params, idx), [","], []); idx++;
-            BlackBorneOff = llParseString2List(llList2String(params, idx), [","], []); idx++;
+            
+            // Update bar and borne off lists - handle empty strings correctly
+            string whiteBarStr = llList2String(params, idx); idx++;
+            if (whiteBarStr == "") WhiteBarList = [];
+            else WhiteBarList = llParseString2List(whiteBarStr, [","], []);
+            
+            string blackBarStr = llList2String(params, idx); idx++;
+            if (blackBarStr == "") BlackBarList = [];
+            else BlackBarList = llParseString2List(blackBarStr, [","], []);
+            
+            string whiteOffStr = llList2String(params, idx); idx++;
+            if (whiteOffStr == "") WhiteBorneOff = [];
+            else WhiteBorneOff = llParseString2List(whiteOffStr, [","], []);
+            
+            string blackOffStr = llList2String(params, idx); idx++;
+            if (blackOffStr == "") BlackBorneOff = [];
+            else BlackBorneOff = llParseString2List(blackOffStr, [","], []);
         }
     }    
 }
