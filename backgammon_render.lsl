@@ -337,7 +337,7 @@ ArrangeStorage(integer color) {
     
     integer i;
     for (i = 1; i <= 15; i++) {
-        string pieceName = prefix + "checker" + (string)i;
+        string pieceName = prefix + (string)i;
         integer linkNum = GetLinkNumber(pieceName);
         
         if (linkNum != 0) {
