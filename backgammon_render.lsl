@@ -626,6 +626,8 @@ default {
             } else {
                 // For regular moves, update the source point
                 Arrange(color, from_point);
+                // AND update the destination point!
+                Arrange(color, to_point);
             }
             
             // Force full refresh to ensure consistency
