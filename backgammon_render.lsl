@@ -547,6 +547,10 @@ default {
             
             llOwnerSay("DEBUG RENDER: Finished processing BOARD_STATE");
         }
+        else if (command == "START_FIRST_ROLL") {
+            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: START_FIRST_ROLL received - Arranging pieces for game start");
+            refreshAllPieces();
+        }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
             if (DEBUG_MODE) llOwnerSay("DEBUG: Positioning dice for first roll");        
             // Position white die and black die at corners
