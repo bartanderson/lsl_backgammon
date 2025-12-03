@@ -1077,6 +1077,8 @@ default {
             string blackOffStr = llList2String(params, idx); idx++;
             if (blackOffStr == "") BlackBorneOff = [];
             else BlackBorneOff = llParseString2List(blackOffStr, [","], []);
+            
+            if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: SYNC_BOARD complete - WhiteBar=" + (string)llGetListLength(WhiteBarList) + " BlackBar=" + (string)llGetListLength(BlackBarList));
         }
     }    
 }
