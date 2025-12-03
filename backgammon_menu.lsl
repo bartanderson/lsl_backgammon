@@ -113,11 +113,11 @@ showMainMenu(key user) {
     menu_user = user;
     
     string aiControlText = "Humans: Both";
-    if (whitePlayer == NULL_KEY && blackPlayer == NULL_KEY) {
+    if (MASTER_WHITE_AI && MASTER_BLACK_AI) {
         aiControlText = "AI: Both";
-    } else if (whitePlayer == NULL_KEY) {
+    } else if (MASTER_WHITE_AI) {
         aiControlText = "AI: White";
-    } else if (blackPlayer == NULL_KEY) {
+    } else if (MASTER_BLACK_AI) {
         aiControlText = "AI: Black";
     }
     
@@ -128,10 +128,12 @@ showMainMenu(key user) {
     menuText = menuText + "\nDice: " + (string)currentDie1 + "," + (string)currentDie2;
     menuText = menuText + "\nControl: " + aiControlText;
     
-    // Show AI levels if any AI is active
-    if (WHITE_AI_LEVEL > 0 || BLACK_AI_LEVEL > 0) {
-        menuText += "\nWhite: " + getLevelName(WHITE_AI_LEVEL);
-        menuText += "\nBlack: " + getLevelName(BLACK_AI_LEVEL);
+    // Show AI levels ONLY if that specific AI is active
+    if (MASTER_WHITE_AI) {
+        menuText += "\nWhite AI: " + getLevelName(WHITE_AI_LEVEL);
+    }
+    if (MASTER_BLACK_AI) {
+        menuText += "\nBlack AI: " + getLevelName(BLACK_AI_LEVEL);
     }
     
     list buttons = ["AI Control", "Reset", "Cancel"];
