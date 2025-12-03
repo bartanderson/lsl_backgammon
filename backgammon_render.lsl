@@ -367,6 +367,42 @@ ArrangeStorage(integer color) {
     }
 }
 
+ArrangeStoragePiece(string pieceName) {
+    integer linkNum = GetLinkNumber(pieceName);
+    if (linkNum == 0) return;
+    
+    // Parse ID from name (e.g. "w1" -> 1, "b15" -> 15)
+    string prefix = llGetSubString(pieceName, 0, 0);
+    integer id = (integer)llGetSubString(pieceName, 1, -1);
+    
+    integer color = 0; // White
+    float uStart = STORAGE_U_WHITE;
+    float vStart = STORAGE_V_WHITE;
+    
+    if (prefix == "b") {
+        color = 1; // Black
+        uStart = STORAGE_U_BLACK;
+        vStart = STORAGE_V_BLACK;
+    }
+    
+    // Calculate storage position (Same logic as ArrangeStorage)
+    float uPos = uStart;
+    float vPos;
+    
+    if (color == 0) { // White
+         vPos = vStart + (id * STORAGE_SPACING);
+    } else { // Black
+         vPos = vStart - (id * STORAGE_SPACING);
+    }
+    
+    float zPos = localHeight - (checkerheight * STORAGE_SINK);
+    
+    vector uvCoords = <uPos, vPos, zPos>;
+    vector localPos = ScaledFromUV(uvCoords);
+    
+    llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos, PRIM_ROTATION, STORAGE_ROT]);
+}
+
 resetToStorage() {
     if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Moving pieces to storage");
     ArrangeStorage(0); // White
@@ -670,12 +706,8 @@ default {
             // Update local BoardList immediately (to_point = -1 for bear-off)
             updateLocalBoard(piece, from_point, -1);
             
-            // HIDE THE PIECE
-            integer linkNum = GetLinkNumber(piece);
-            if (linkNum != 0) {
-                // Move to hidden position (under the table/board)
-                llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POS_LOCAL, <0.0, 0.0, -1.0>]);
-            }
+            // MOVE TO STORAGE
+            ArrangeStoragePiece(piece);
             
             integer color;
             if(llGetSubString(piece, 0, 0) == "w") color = 0;
