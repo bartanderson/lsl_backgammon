@@ -15,10 +15,10 @@ integer goldMarkerLink = -1;
 integer FROM_BAR = -2;
 
 // Storage Tuning
-float STORAGE_U_WHITE = 1.08; // Beyond right edge
-float STORAGE_U_BLACK = 1.08; 
-float STORAGE_V_WHITE = 0.60; // Match wList start approx
-float STORAGE_V_BLACK = 0.41; // Match bList start approx
+float STORAGE_U_TOP = 1.08; // Beyond right edge (top storage)
+float STORAGE_U_BOTTOM = 1.08; // Beyond right edge (bottom storage)
+float STORAGE_V_TOP = 0.60; // Top storage location (white pieces go here)
+float STORAGE_V_BOTTOM = 0.41; // Bottom storage location (black pieces go here)
 float STORAGE_SPACING = 0.02; // Gap between stored pieces
 float STORAGE_SINK = 0.2;     // 1/5th sink factor
 rotation STORAGE_ROT = ZERO_ROTATION; // Will be set in init
@@ -326,13 +326,14 @@ Arrange(integer color, integer position) {
 
 ArrangeStorage(integer color) {
     // Move all 15 pieces of color to storage
-    string prefix = "w";
-    float uStart = STORAGE_U_WHITE;
-    float vStart = STORAGE_V_WHITE;
+    // NOTE: White pieces go to TOP storage, black pieces go to BOTTOM storage
+    string prefix = "b";  // White color (0) moves black pieces to top
+    float uStart = STORAGE_U_TOP;
+    float vStart = STORAGE_V_TOP;
     if (color == 1) {
-        prefix = "b";
-        uStart = STORAGE_U_BLACK;
-        vStart = STORAGE_V_BLACK;
+        prefix = "w";  // Black color (1) moves white pieces to bottom
+        uStart = STORAGE_U_BOTTOM;
+        vStart = STORAGE_V_BOTTOM;
     }
     
     integer i;
@@ -375,14 +376,19 @@ ArrangeStoragePiece(string pieceName) {
     string prefix = llGetSubString(pieceName, 0, 0);
     integer id = (integer)llGetSubString(pieceName, 1, -1);
     
-    integer color = 0; // White
-    float uStart = STORAGE_U_WHITE;
-    float vStart = STORAGE_V_WHITE;
+    // NOTE: White pieces (w*) go to TOP storage, black pieces (b*) go to BOTTOM storage
+    integer color = 0; // Default to white
+    float uStart = STORAGE_U_TOP;  // White pieces use top storage
+    float vStart = STORAGE_V_TOP;
     
-    if (prefix == "b") {
+    if (prefix == "w") {  // If piece is white, use top storage
+        color = 0; // White
+        uStart = STORAGE_U_TOP;
+        vStart = STORAGE_V_TOP;
+    } else {  // If piece is black, use bottom storage
         color = 1; // Black
-        uStart = STORAGE_U_BLACK;
-        vStart = STORAGE_V_BLACK;
+        uStart = STORAGE_U_BOTTOM;
+        vStart = STORAGE_V_BOTTOM;
     }
     
     // Calculate storage position (Same logic as ArrangeStorage)
