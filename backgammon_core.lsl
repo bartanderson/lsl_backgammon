@@ -383,10 +383,6 @@ list calculateValidMoves(integer fromPoint, integer color) {
             if (!isPointBlocked(toPoint, color)) {
                 if (llListFindList(moves, [toPoint]) == -1) moves += toPoint;
             }
-            // Also check if bear-off is valid (for undershoot scenarios)
-            if (bearingOff && isValidBearOff(fromPoint, die, color)) {
-                if (llListFindList(moves, [BEAR_OFF]) == -1) moves += BEAR_OFF;
-            }
         }
     }
     
