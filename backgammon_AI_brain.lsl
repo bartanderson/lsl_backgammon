@@ -791,7 +791,7 @@ string pickBestMove(integer level) {
 }
 
 generateAIMove() {
-    if (DEBUG_MODE) llOwnerSay("BRAIN Level " + (string)AI_LEVEL + " generating move...");
+    if (DEBUG_MODE) llOwnerSay("*** NEW CODE LOADED *** BRAIN Level " + (string)AI_LEVEL + " generating move for " + currentTurn + " with dice " + (string)currentDie1 + "," + (string)currentDie2);
     
     string move = "";
     
