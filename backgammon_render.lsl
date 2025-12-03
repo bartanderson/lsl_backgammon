@@ -328,11 +328,11 @@ ArrangeStorage(integer color) {
     // Move all 15 pieces of color to storage
     string prefix = "w";
     float uStart = STORAGE_U_WHITE;
-    float vPos = STORAGE_V_WHITE;
+    float vStart = STORAGE_V_WHITE;
     if (color == 1) {
         prefix = "b";
         uStart = STORAGE_U_BLACK;
-        vPos = STORAGE_V_BLACK;
+        vStart = STORAGE_V_BLACK;
     }
     
     integer i;
@@ -342,8 +342,18 @@ ArrangeStorage(integer color) {
         
         if (linkNum != 0) {
             // Calculate storage position
-            // Stack horizontally? "Next to each other"
-            float uPos = uStart + (i * STORAGE_SPACING);
+            // Stack VERTICALLY as requested
+            // White (Bottom Right): CCW -> Up (+V)
+            // Black (Top Right): CW -> Down (-V)
+            
+            float uPos = uStart; // Fixed U
+            float vPos;
+            
+            if (color == 0) { // White
+                 vPos = vStart + (i * STORAGE_SPACING);
+            } else { // Black
+                 vPos = vStart - (i * STORAGE_SPACING);
+            }
             
             // Sink into surface
             float zPos = localHeight - (checkerheight * STORAGE_SINK); // Sunk
