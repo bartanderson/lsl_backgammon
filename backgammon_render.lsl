@@ -11,8 +11,18 @@ list faceRotations;
 
 integer silver1MarkerLink = -1;
 integer silver2MarkerLink = -1;
+integer silver2MarkerLink = -1;
 integer goldMarkerLink = -1;
 integer FROM_BAR = -2;
+
+// Storage Tuning
+float STORAGE_U_WHITE = 1.05; // Beyond right edge
+float STORAGE_U_BLACK = 1.05; 
+float STORAGE_V_WHITE = 0.60; // Match wList start approx
+float STORAGE_V_BLACK = 0.40; // Match bList start approx
+float STORAGE_SPACING = 0.02; // Gap between stored pieces
+float STORAGE_SINK = 0.2;     // 1/5th sink factor
+rotation STORAGE_ROT = ZERO_ROTATION; // Will be set in init
 
 integer i;
 float local_surfaceHeight() {
@@ -28,6 +38,7 @@ setRots() {
         llEuler2Rot(<180.0 * DEG_TO_RAD, 0.0, 0.0>),  // Face 5
         llEuler2Rot(<0.0, -90.0 * DEG_TO_RAD, 0.0>)   // Face 6
     ];
+    STORAGE_ROT = llEuler2Rot(<0.0, 90.0 * DEG_TO_RAD, 0.0>); // Stand on edge facing Y? Adjust if needed
 }
 
 setDiePosition(string dieName, float u, float v, integer isVisible) {
@@ -314,6 +325,45 @@ Arrange(integer color, integer position) {
     }
 }
 
+ArrangeStorage(integer color) {
+    // Move all 15 pieces of color to storage
+    string prefix = "w";
+    float uStart = STORAGE_U_WHITE;
+    float vPos = STORAGE_V_WHITE;
+    if (color == 1) {
+        prefix = "b";
+        uStart = STORAGE_U_BLACK;
+        vPos = STORAGE_V_BLACK;
+    }
+    
+    integer i;
+    for (i = 1; i <= 15; i++) {
+        string pieceName = prefix + "checker" + (string)i;
+        integer linkNum = GetLinkNumber(pieceName);
+        
+        if (linkNum != 0) {
+            // Calculate storage position
+            // Stack horizontally? "Next to each other"
+            float uPos = uStart + (i * STORAGE_SPACING);
+            
+            // Sink into surface
+            float zPos = localHeight - (checkerheight * STORAGE_SINK); // Sunk
+            
+            vector uvCoords = <uPos, vPos, zPos>;
+            vector localPos = ScaledFromUV(uvCoords);
+            
+            // Apply rotation
+            llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos, PRIM_ROTATION, STORAGE_ROT]);
+        }
+    }
+}
+
+resetToStorage() {
+    if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Moving pieces to storage");
+    ArrangeStorage(0); // White
+    ArrangeStorage(1); // Black
+}
+
 positionMarker(integer markerType, integer color, integer position) {
     float uPosition;
     list verticalList;
@@ -410,6 +460,8 @@ default {
         silver2MarkerLink = GetLinkNumber("silver2");
         goldMarkerLink = GetLinkNumber("gold");
         init_render();
+        // Initial state: Storage
+        resetToStorage();
     }
     
     link_message(integer sender_num, integer num, string str, key id) {
@@ -669,6 +721,14 @@ default {
             if (DEBUG_MODE) {
                 llOwnerSay("DEBUG: Render state reset and refreshed");
             }
+            // Move to storage on reset
+            resetToStorage();
+        }
+        else if (command == "GAME_OVER") {
+             if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Game Over received - waiting 2s then storage");
+             llSleep(2.0);
+             resetToStorage();
+        }
         }
     }
 }
