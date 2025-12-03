@@ -37,7 +37,7 @@ setRots() {
         llEuler2Rot(<180.0 * DEG_TO_RAD, 0.0, 0.0>),  // Face 5
         llEuler2Rot(<0.0, -90.0 * DEG_TO_RAD, 0.0>)   // Face 6
     ];
-    STORAGE_ROT = llEuler2Rot(<0.0, 90.0 * DEG_TO_RAD, 0.0>); // Stand on edge facing Y? Adjust if needed
+    STORAGE_ROT = llEuler2Rot(<90.0 * DEG_TO_RAD, 0.0, 0.0>); // Stand on edge facing X-axis (Parallel to running axis)
 }
 
 setDiePosition(string dieName, float u, float v, integer isVisible) {
