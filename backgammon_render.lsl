@@ -15,10 +15,10 @@ integer goldMarkerLink = -1;
 integer FROM_BAR = -2;
 
 // Storage Tuning
-float STORAGE_U_WHITE = 1.05; // Beyond right edge
-float STORAGE_U_BLACK = 1.05; 
+float STORAGE_U_WHITE = 1.08; // Beyond right edge
+float STORAGE_U_BLACK = 1.08; 
 float STORAGE_V_WHITE = 0.60; // Match wList start approx
-float STORAGE_V_BLACK = 0.40; // Match bList start approx
+float STORAGE_V_BLACK = 0.41; // Match bList start approx
 float STORAGE_SPACING = 0.02; // Gap between stored pieces
 float STORAGE_SINK = 0.2;     // 1/5th sink factor
 rotation STORAGE_ROT = ZERO_ROTATION; // Will be set in init
@@ -319,7 +319,7 @@ Arrange(integer color, integer position) {
             vector localPos = ScaledFromUV(uvCoords);
             
             // Position the piece
-            llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos]);
+            llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos, PRIM_ROTATION, ZERO_ROTATION]);
         }
     }
 }
