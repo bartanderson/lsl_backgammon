@@ -289,6 +289,9 @@ default {
             
             if (destIndex != -1) {
                 isValid = TRUE;
+                if (internalPoint == -1) {
+                    isBearOff = TRUE;
+                }
             } else {
                 // Check if this is a bear-off click
                 if (llListFindList(validMoves, [-1]) != -1) {
