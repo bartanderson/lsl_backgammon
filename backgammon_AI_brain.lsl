@@ -339,11 +339,7 @@ list getAllValidMoves() {
     // ENFORCEMENT: Check if player has pieces on bar - if yes, ONLY bar moves allowed
     if (currentTurn == "white" && llGetListLength(WhiteBarList) > 0) {
         if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: White has pieces on bar - only considering bar moves");
-        string barMove = generateBarMove(); // Currently returns ONE move. Need to fix this too?
-        // For now, let's assume generateBarMove returns a single valid move. 
-        // Ideally it should return ALL valid bar moves.
-        // But the current implementation of generateBarMove returns the FIRST valid one.
-        // For AI v1, this is acceptable for bar moves (usually obvious).
+        string barMove = generateBarMove();
         if (barMove != "") allMoves += [barMove];
         return allMoves;
     }
@@ -357,9 +353,6 @@ list getAllValidMoves() {
     // ENFORCEMENT: Check if player must bear off - if yes, ONLY bear off moves allowed
     if (mustBearOff(currentTurn)) {
         if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: Player must bear off - only considering bear off moves");
-        // Same issue: generateBearOffMove returns FIRST valid move.
-        // We should really refactor those too, but for now let's stick to the existing one
-        // and maybe just return that one move.
         string bearOffMove = generateBearOffMove();
         if (bearOffMove != "") {
             allMoves += [bearOffMove];
@@ -374,6 +367,8 @@ list getAllValidMoves() {
     }
 
     // Existing logic for regular moves
+    if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: Checking regular moves, dice: " + (string)currentDie1 + "," + (string)currentDie2);
+    
     // REVERSE the iteration order for black
     integer startPoint = 0;
     integer endPoint = BOARD_SIZE - 1;
@@ -386,8 +381,10 @@ list getAllValidMoves() {
     }
     
     integer i = startPoint;
+    integer pointsChecked = 0;
     while ((currentTurn == "white" && i <= endPoint) || (currentTurn == "black" && i >= endPoint)) {
         string point = llList2String(BoardList, i);
+        pointsChecked++;
         if (point != "") {
             string playerColor;
             if (currentTurn == "white") playerColor = "w";
@@ -396,12 +393,15 @@ list getAllValidMoves() {
             if (llSubStringIndex(point, playerColor) != -1) {
                 list movesFromPoint = getValidMovesFromPoint(i);
                 if (llGetListLength(movesFromPoint) > 0) {
+                    if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: Found " + (string)llGetListLength(movesFromPoint) + " moves from point " + (string)i);
                     allMoves += movesFromPoint;
                 }
             }
         }
         i = i + step;
     }
+    
+    if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: Checked " + (string)pointsChecked + " points, found " + (string)llGetListLength(allMoves) + " total moves");
 
     return allMoves;
 }
