@@ -815,6 +815,20 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
         blackDie1 = die1;
         blackDie2 = die2;
         blackOnce = TRUE;
+        
+        // If Black just rolled (e.g. Human), and White is AI, trigger White
+        if (CORE_WHITE_AI && !whiteOnce) {
+            llSleep(1.0);
+            integer wDie = 1 + (integer)llFrand(6);
+            llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)wDie + "|0", NULL_KEY);
+        }
+    }
+    
+    // If White just rolled (e.g. Human), and Black is AI, trigger Black
+    if (player == "white" && CORE_BLACK_AI && !blackOnce) {
+        llSleep(1.0);
+        integer bDie = 1 + (integer)llFrand(6);
+        llMessageLinked(LINK_SET, 0, "DICE_ROLL|black|" + (string)bDie + "|0", NULL_KEY);
     }
     
     if (!whiteOnce || !blackOnce) return;
@@ -827,16 +841,31 @@ handleFirstRollPhase(string player, integer die1, integer die2) {
         whiteOnce = FALSE;
         blackOnce = FALSE;
         
+        // Auto-reroll for AI vs AI
         if (white == NULL_KEY && black == NULL_KEY) {
             llSleep(2.0);
             whiteDie1 = 1 + (integer)llFrand(6);
-            whiteDie2 = 1 + (integer)llFrand(6);
+            whiteDie2 = 0; // First roll is one die only
             blackDie1 = 1 + (integer)llFrand(6);
-            blackDie2 = 1 + (integer)llFrand(6);
+            blackDie2 = 0; // First roll is one die only
             
             llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|" + (string)whiteDie2, NULL_KEY);
             llSleep(1.0);
             llMessageLinked(LINK_SET, 0, "DICE_ROLL|black|" + (string)blackDie1 + "|" + (string)blackDie2, NULL_KEY);
+        }
+        // Auto-reroll for Human vs AI
+        else if (CORE_WHITE_AI || CORE_BLACK_AI) {
+             llSleep(2.0);
+             // If Human vs AI, we can just trigger the AI to roll again
+             // But simpler to just reset and let them click/auto-roll logic handle it
+             if (CORE_WHITE_AI) {
+                 whiteDie1 = 1 + (integer)llFrand(6);
+                 llMessageLinked(LINK_SET, 0, "DICE_ROLL|white|" + (string)whiteDie1 + "|0", NULL_KEY);
+             }
+             if (CORE_BLACK_AI) {
+                 blackDie1 = 1 + (integer)llFrand(6);
+                 llMessageLinked(LINK_SET, 0, "DICE_ROLL|black|" + (string)blackDie1 + "|0", NULL_KEY);
+             }
         }
         return;
     }
@@ -1075,14 +1104,28 @@ default {
             if (player == "black") color = 1;
             
             // Check if player has pieces on bar
-            if (color == 0 && llGetListLength(WhiteBarList) > 0 && point != FROM_BAR) {
-                // Must move from bar first
-                llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
-                return;
+            // Check if player has pieces on bar
+            if (color == 0) {
+                if (llGetListLength(WhiteBarList) > 0 && point != FROM_BAR) {
+                    llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
+                    return;
+                }
+                // FIX: If requesting FROM_BAR but no pieces on bar, return empty
+                if (point == FROM_BAR && llGetListLength(WhiteBarList) == 0) {
+                    llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|", NULL_KEY);
+                    return;
+                }
             }
-            if (color == 1 && llGetListLength(BlackBarList) > 0 && point != FROM_BAR) {
-                llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
-                return;
+            if (color == 1) {
+                if (llGetListLength(BlackBarList) > 0 && point != FROM_BAR) {
+                    llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|BAR_ONLY", NULL_KEY);
+                    return;
+                }
+                // FIX: If requesting FROM_BAR but no pieces on bar, return empty
+                if (point == FROM_BAR && llGetListLength(BlackBarList) == 0) {
+                    llMessageLinked(LINK_SET, 0, "VALID_MOVES|" + (string)point + "|", NULL_KEY);
+                    return;
+                }
             }
             
             list moves = calculateValidMoves(point, color);

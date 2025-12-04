@@ -781,6 +781,10 @@ default {
                      sendMessage("You have pieces on the bar. Auto-selected.");
                 }
                 
+                // SAFETY CHECK: If we still don't have a selected piece, abort.
+                // This prevents "Ghost Markers" if valid moves arrive unexpectedly.
+                if (!pieceSelected) return;
+                
                 integer color = 0;
                 if (turn == "black") color = 1;
                 

@@ -112,14 +112,13 @@ startAIGame() {
 showMainMenu(key user) {
     menu_user = user;
     
-    string aiControlText = "Humans: Both";
-    if (MASTER_WHITE_AI && MASTER_BLACK_AI) {
-        aiControlText = "AI: Both";
-    } else if (MASTER_WHITE_AI) {
-        aiControlText = "AI: White";
-    } else if (MASTER_BLACK_AI) {
-        aiControlText = "AI: Black";
-    }
+    string whiteStatus = "Human";
+    if (MASTER_WHITE_AI) whiteStatus = "AI";
+    
+    string blackStatus = "Human";
+    if (MASTER_BLACK_AI) blackStatus = "AI";
+    
+    string aiControlText = whiteStatus + " vs " + blackStatus;
     
     menu_channel = (integer)(llFrand(99999.0) * -1);
     menu_listener = llListen(menu_channel, "", user, "");
