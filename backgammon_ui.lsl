@@ -781,7 +781,12 @@ default {
                 selectedPlayer = NULL_KEY;
             } else {
                 // AUTO-HIGHLIGHT: Auto-select if this was a proactive check for the bar
-                if (sourcePoint == FROM_BAR && !pieceSelected) {
+                // Only for human players
+                integer isAITurn = FALSE;
+                if (turn == "white" && UI_WHITE_AI) isAITurn = TRUE;
+                else if (turn == "black" && UI_BLACK_AI) isAITurn = TRUE;
+                
+                if (sourcePoint == FROM_BAR && !pieceSelected && !isAITurn) {
                      pieceSelected = TRUE;
                      selectedPoint = FROM_BAR;
                      if (turn == "white") selectedPlayer = white;
