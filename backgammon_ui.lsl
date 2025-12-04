@@ -616,6 +616,10 @@ default {
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
             
+            // AUTO-HIGHLIGHT: Check for valid moves from bar immediately
+            // This proactively asks Core "Can I move from the bar?"
+            llMessageLinked(LINK_SET, 0, "REQUEST_VALID_MOVES|" + (string)FROM_BAR + "|" + turn, NULL_KEY);
+            
         }
         else if (command == "INVALID_MOVE") {
             string player = llList2String(params, 1);
@@ -758,11 +762,25 @@ default {
             }
             
             if (llGetListLength(validMoves) == 0) {
+                // If this was an auto-check from DICE_RESULT (pieceSelected is FALSE), don't spam "No valid moves"
+                if (sourcePoint == FROM_BAR && !pieceSelected) {
+                    return; 
+                }
+                
                 sendMessage("No valid moves for this piece.");
                 pieceSelected = FALSE;
                 selectedPoint = -1;
                 selectedPlayer = NULL_KEY;
             } else {
+                // AUTO-HIGHLIGHT: Auto-select if this was a proactive check for the bar
+                if (sourcePoint == FROM_BAR && !pieceSelected) {
+                     pieceSelected = TRUE;
+                     selectedPoint = FROM_BAR;
+                     if (turn == "white") selectedPlayer = white;
+                     else selectedPlayer = black;
+                     sendMessage("You have pieces on the bar. Auto-selected.");
+                }
+                
                 integer color = 0;
                 if (turn == "black") color = 1;
                 

@@ -793,6 +793,12 @@ string pickBestMove(integer level) {
 generateAIMove() {
     if (DEBUG_MODE) llOwnerSay("*** NEW CODE LOADED *** BRAIN Level " + (string)AI_LEVEL + " generating move for " + currentTurn + " with dice " + (string)currentDie1 + "," + (string)currentDie2);
     
+    // Safety fallback for invalid levels
+    if (AI_LEVEL < 1) {
+        if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: Invalid AI Level " + (string)AI_LEVEL + " detected. Defaulting to Level 1 (Random).");
+        AI_LEVEL = LEVEL_RANDOM;
+    }
+    
     string move = "";
     
     if (AI_LEVEL == LEVEL_RANDOM) {

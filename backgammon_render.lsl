@@ -136,7 +136,20 @@ animateDieRoll(string name, integer finalValue) {
     integer n = GetLinkNumber(name);
     if (n == 0) return;
     
-    // Just set the value directly without animation
+    // Generate a random intermediate value DIFFERENT from finalValue
+    // to ensure visible movement (shake effect)
+    integer intermediate = 1 + (integer)llFrand(6.0);
+    while (intermediate == finalValue) {
+        intermediate = 1 + (integer)llFrand(6.0);
+    }
+    
+    // Show intermediate value
+    rotateDieToValue(name, intermediate);
+    
+    // Short delay for the "shake"
+    llSleep(0.1);
+    
+    // Show final value
     rotateDieToValue(name, finalValue);
 }
 
