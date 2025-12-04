@@ -27,6 +27,8 @@ integer gMoveCounter = 0;
 
 // CONTROL STATE from Menu
 integer UI_SIMULATING = FALSE;
+integer UI_WHITE_AI = FALSE;
+integer UI_BLACK_AI = FALSE;
 
 // Click debouncing
 float gLastClickTime = 0.0;
@@ -900,6 +902,14 @@ default {
             currentDie2 = 0;
             
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
+        }
+        else if (command == "CONTROL_STATE") {
+            string stateType = llList2String(params, 1);
+            string stateValue = llList2String(params, 2);
+            
+            if (stateType == "WHITE_AI") UI_WHITE_AI = (integer)stateValue;
+            else if (stateType == "BLACK_AI") UI_BLACK_AI = (integer)stateValue;
+            else if (stateType == "SIMULATING") UI_SIMULATING = (integer)stateValue;
         }
     }
 }
