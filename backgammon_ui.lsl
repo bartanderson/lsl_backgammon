@@ -776,6 +776,12 @@ default {
                 }
                 
                 sendMessage("No valid moves for this piece.");
+                
+                // FIX: Ensure markers are hidden if we are deselecting
+                llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);
+                llMessageLinked(LINK_SET, 0, "HIDE_MARKER|2", NULL_KEY);
+                llMessageLinked(LINK_SET, 0, "HIDE_MARKER|3", NULL_KEY);
+                
                 pieceSelected = FALSE;
                 selectedPoint = -1;
                 selectedPlayer = NULL_KEY;
