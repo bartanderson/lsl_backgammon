@@ -488,7 +488,7 @@ hideMarker(integer markerType) {
     if(markerType == 1) num = goldMarkerLink;
     else if(markerType == 2) num = silver1MarkerLink;
     else if(markerType == 3) num = silver2MarkerLink;
-    llSetLinkPrimitiveParamsFast(num, [PRIM_POSITION, ZERO_VECTOR]);
+    llSetLinkPrimitiveParamsFast(num, [PRIM_POSITION, <0,0,-5.0>]);
 }
 
 refreshAllPieces() {

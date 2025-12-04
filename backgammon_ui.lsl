@@ -617,8 +617,14 @@ default {
             llMessageLinked(LINK_SET, 0, "SHOW_PLAYER_DICE|" + turn, NULL_KEY);
             
             // AUTO-HIGHLIGHT: Check for valid moves from bar immediately
-            // This proactively asks Core "Can I move from the bar?"
-            llMessageLinked(LINK_SET, 0, "REQUEST_VALID_MOVES|" + (string)FROM_BAR + "|" + turn, NULL_KEY);
+            // Only for human players (AI doesn't need visual markers)
+            integer isAITurn = FALSE;
+            if (turn == "white" && UI_WHITE_AI) isAITurn = TRUE;
+            else if (turn == "black" && UI_BLACK_AI) isAITurn = TRUE;
+            
+            if (!isAITurn) {
+                llMessageLinked(LINK_SET, 0, "REQUEST_VALID_MOVES|" + (string)FROM_BAR + "|" + turn, NULL_KEY);
+            }
             
         }
         else if (command == "INVALID_MOVE") {
