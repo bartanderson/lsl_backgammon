@@ -804,6 +804,12 @@ default {
                 // This prevents "Ghost Markers" if valid moves arrive unexpectedly.
                 if (!pieceSelected) return;
                 
+                // FIX: Don't show markers for AI players
+                if (isAITurn) {
+                    if (DEBUG_MODE) llOwnerSay("DEBUG UI: Skipping marker display for AI turn");
+                    return;
+                }
+                
                 integer color = 0;
                 if (turn == "black") color = 1;
                 
