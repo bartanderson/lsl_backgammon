@@ -735,7 +735,22 @@ integer evaluateBoard(list board, string playerColor, integer ourOffCount, integ
             if (isMadePoint(board, i, playerColor)) anchorCount++;
         }
     }
-    score += anchorCount * W_ANCHOR; // Defensive anchors
+    
+    // DYNAMIC ANCHOR WEIGHTING
+    // Adjust anchor value based on race status (pipDiff)
+    // pipDiff > 0 means we are ahead (winning race)
+    integer effectiveAnchorWeight = W_ANCHOR;
+    
+    if (pipDiff > 20) {
+        // Significantly ahead: Anchors are less valuable, encourage running
+        effectiveAnchorWeight = 10; 
+    } else if (pipDiff > 0) {
+        // Slightly ahead: Slightly reduce anchor value
+        effectiveAnchorWeight = 25;
+    }
+    // If behind (pipDiff <= 0), keep full W_ANCHOR (50) to hold for a shot
+    
+    score += anchorCount * effectiveAnchorWeight; // Defensive anchors
     
     // 4. Bar Penalty
     score += ourBarCount * W_BAR_SELF; // Heavy penalty for being on bar
