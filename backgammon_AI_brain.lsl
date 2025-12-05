@@ -597,40 +597,7 @@ list simulateMove(list currentBoard, integer fromPoint, integer toPoint, string 
 
 // === STRATEGIC AI HELPERS ===
 
-integer calculatePipCount(list board, string color, list barList) {
-    // Calculate total pips (distance to bear off)
-    // Lower is better
-    integer totalPips = 0;
-    
-    // Bar pieces count as 25 pips from home
-    totalPips += llGetListLength(barList) * 25;
-    
-    integer i;
-    for (i = 0; i < BOARD_SIZE; i++) {
-        string content = llList2String(board, i);
-        if (content != "") {
-            // Count pieces of this color at this point
-            integer count = 0;
-            integer j;
-            for (j = 0; j < llStringLength(content); j++) {
-                if (llGetSubString(content, j, j) == color) count++;
-            }
-            
-            if (count > 0) {
-                // Distance calculation depends on color
-                integer distance;
-                if (color == "w") {
-                    distance = 24 - i; // White moves toward point 23
-                } else {
-                    distance = i + 1;  // Black moves toward point 0
-                }
-                totalPips += count * distance;
-            }
-        }
-    }
-    
-    return totalPips;
-}
+
 
 integer isMadePoint(list board, integer point, string color) {
     // Check if point has 2+ pieces of specified color
@@ -666,12 +633,18 @@ integer countConsecutivePoints(list board, string color) {
     return maxPrime;
 }
 
-integer evaluateBoard(list board, string playerColor) {
+integer evaluateBoard(list board, string playerColor, integer ourOffCount, integer oppOffCount) {
     integer score = 0;
     string opponentColor = "b";
     if (playerColor == "b") opponentColor = "w";
     
-    // === BASIC HEURISTICS ===
+    // DYNAMICALLY CALCULATE PIECE COUNTS
+    // We cannot use global WhiteBarList/BlackBarList because they are not updated during simulation
+    // We must derive bar counts from: Total(15) - OnBoard - BorneOff
+    
+    integer ourOnBoard = 0;
+    integer oppOnBoard = 0;
+    
     integer i;
     for (i = 0; i < BOARD_SIZE; i++) {
         string content = llList2String(board, i);
@@ -680,25 +653,55 @@ integer evaluateBoard(list board, string playerColor) {
         if (len > 0) {
             string p = llGetSubString(content, 0, 0);
             if (p == playerColor) {
-                // Own piece
+                ourOnBoard += len;
+                // Own piece heuristics
                 if (len == 1) score += W_BLOT; // Blot (Vulnerable)
                 else if (len >= 2) score += W_MADE_POINT; // Made Point
+            } else {
+                oppOnBoard += len;
             }
         }
     }
     
+    integer ourBarCount = 15 - ourOnBoard - ourOffCount;
+    integer oppBarCount = 15 - oppOnBoard - oppOffCount;
+    
+    // Safety clamp (shouldn't happen if logic is perfect, but good for robustness)
+    if (ourBarCount < 0) ourBarCount = 0;
+    if (oppBarCount < 0) oppBarCount = 0;
+    
     // === STRATEGIC HEURISTICS ===
     
     // 1. Pip Count (Race Position)
-    list ourBarList = WhiteBarList;
-    list oppBarList = BlackBarList;
-    if (playerColor == "b") {
-        ourBarList = BlackBarList;
-        oppBarList = WhiteBarList;
-    }
+    // Calculate pips using the dynamic bar counts
+    integer ourPips = 0;
+    integer oppPips = 0;
     
-    integer ourPips = calculatePipCount(board, playerColor, ourBarList);
-    integer oppPips = calculatePipCount(board, opponentColor, oppBarList);
+    // Bar pips
+    ourPips += ourBarCount * 25;
+    oppPips += oppBarCount * 25;
+    
+    // Board pips
+    for (i = 0; i < BOARD_SIZE; i++) {
+        string content = llList2String(board, i);
+        if (content != "") {
+            integer count = llStringLength(content);
+            string p = llGetSubString(content, 0, 0);
+            
+            if (p == playerColor) { // Our pieces
+                integer dist;
+                if (playerColor == "w") dist = 24 - i;
+                else dist = i + 1;
+                ourPips += count * dist;
+            } else { // Opponent pieces
+                integer dist;
+                if (opponentColor == "w") dist = 24 - i;
+                else dist = i + 1;
+                oppPips += count * dist;
+            }
+        }
+    }
+
     integer pipDiff = oppPips - ourPips;
     // Positive pipDiff means we are ahead (our pips < opp pips)
     if (pipDiff > 0) score += (pipDiff * W_PIP_WEIGHT) / 2; // Winning race
@@ -734,8 +737,8 @@ integer evaluateBoard(list board, string playerColor) {
     score += anchorCount * W_ANCHOR; // Defensive anchors
     
     // 4. Bar Penalty
-    score += llGetListLength(ourBarList) * W_BAR_SELF; // Heavy penalty for being on bar
-    score += llGetListLength(oppBarList) * W_BAR_OPP; // Reward for hitting opponent
+    score += ourBarCount * W_BAR_SELF; // Heavy penalty for being on bar
+    score += oppBarCount * W_BAR_OPP; // Reward for hitting opponent
     
     return score;
 }
@@ -759,6 +762,14 @@ string pickBestMove(integer level) {
     string playerColor = "w";
     if (currentTurn == "black") playerColor = "b";
     
+    // Get current off counts for simulation
+    integer currentOurOff = llGetListLength(WhiteBorneOff);
+    integer currentOppOff = llGetListLength(BlackBorneOff);
+    if (playerColor == "b") {
+        currentOurOff = llGetListLength(BlackBorneOff);
+        currentOppOff = llGetListLength(WhiteBorneOff);
+    }
+    
     integer i;
     for (i = 0; i < count; i++) {
         string moveStr = llList2String(moves, i);
@@ -771,8 +782,12 @@ string pickBestMove(integer level) {
         // Simulate
         list nextBoard = simulateMove(BoardList, fromP, toP, playerColor);
         
+        // Adjust off count for simulation if bear off
+        integer simOurOff = currentOurOff;
+        if (toP == BEAR_OFF) simOurOff++;
+        
         // Score
-        integer score = evaluateBoard(nextBoard, playerColor);
+        integer score = evaluateBoard(nextBoard, playerColor, simOurOff, currentOppOff);
         
         // Add randomness for variety if scores are equal?
         // Or add small random weight
