@@ -1010,7 +1010,7 @@ default {
                 gCurrentState = STATE_FIRST_ROLL;
                 llMessageLinked(LINK_SET, 0, "START_FIRST_ROLL", NULL_KEY);
                 
-                if (white == NULL_KEY && black == NULL_KEY) {
+                if (CORE_WHITE_AI && CORE_BLACK_AI) {
                     llSleep(2.0);
                     whiteDie1 = 1 + (integer)llFrand(6);
                     whiteDie2 = 0; // First roll is one die only
