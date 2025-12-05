@@ -663,6 +663,58 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         return;
     }
     
+    // CRITICAL FIX: Check for valid moves BEFORE updating dice state
+    // Calculate what dice will remain after this move
+    integer tempU1 = u1;
+    integer tempU2 = u2;
+    integer tempMovesLeft = movesLeft;
+    
+    if (!isDoubles) {
+        if (movesUsed == 2) {
+            tempU1 = 0;
+            tempU2 = 0;
+        } else if (die_value == u1) tempU1 = 0;
+        else if (die_value == u2) tempU2 = 0;
+    } else {
+        tempMovesLeft = movesLeft - movesUsed;
+    }
+    
+    // Check if turn will be over based on dice
+    integer turnOver = FALSE;
+    if (isDoubles) {
+        if (tempMovesLeft <= 0) turnOver = TRUE;
+    } else {
+        if (tempU1 == 0 && tempU2 == 0) turnOver = TRUE;
+    }
+    
+    // Check if player has any valid moves remaining with the REMAINING dice
+    integer hasMoreMoves = FALSE;
+    if (!turnOver) {
+        // Temporarily set dice to post-move state for validation
+        integer savedU1 = u1;
+        integer savedU2 = u2;
+        integer savedMovesLeft = movesLeft;
+        
+        u1 = tempU1;
+        u2 = tempU2;
+        movesLeft = tempMovesLeft;
+        
+        // Check with remaining dice
+        hasMoreMoves = checkAnyValidMoves(color);
+        
+        // Restore original state for actual update
+        u1 = savedU1;
+        u2 = savedU2;
+        movesLeft = savedMovesLeft;
+        
+        if (!hasMoreMoves) {
+            if (DEBUG_MODE) llOwnerSay("CORE: No valid moves remaining mid-turn - forcing turn end");
+            llMessageLinked(LINK_SET, 0, "GAME_MESSAGE|No more valid moves for " + turn + ". Turn ending.", NULL_KEY);
+            turnOver = TRUE;
+        }
+    }
+    
+    // NOW update dice state (after validation)
     if (!isDoubles) {
         if (movesUsed == 2) {
             u1 = 0;
@@ -676,26 +728,6 @@ processMove(integer from_point, integer to_point, integer die_value, integer mov
         llMessageLinked(LINK_SET, 0, "DICE_REMAINING|" + turn + "|" + (string)u1 + "|" + (string)u2, NULL_KEY);
     } else if (isDoubles && movesLeft > 0) {
         llMessageLinked(LINK_SET, 0, "DICE_REMAINING|" + turn + "|" + (string)u1 + "|" + (string)u2 + "|" + (string)movesLeft, NULL_KEY);
-    }
-
-
-    integer turnOver = FALSE;
-    
-    if (isDoubles) {
-        if (movesLeft <= 0) turnOver = TRUE;
-        else turnOver = FALSE;
-    } else {
-        if (u1 == 0 && u2 == 0) turnOver = TRUE;
-        else turnOver = FALSE;
-    }
-    
-    // Check if player has any valid moves remaining (even if dice remain)
-    if (!turnOver) {
-        if (!checkAnyValidMoves(color)) {
-            if (DEBUG_MODE) llOwnerSay("CORE: No valid moves remaining mid-turn - forcing turn end");
-            llMessageLinked(LINK_SET, 0, "GAME_MESSAGE|No more valid moves for " + turn + ". Turn ending.", NULL_KEY);
-            turnOver = TRUE;
-        }
     }
     
     if (turnOver) {
