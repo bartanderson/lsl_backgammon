@@ -14,3 +14,4 @@
     - [x] Fix "stuck gold marker" UI bug
     - [x] Fix AI "No valid moves" error
     - [x] Fix Bear-Off logic issues
+    - [x] **Fix move validation bug (players losing 50% of moves)**
