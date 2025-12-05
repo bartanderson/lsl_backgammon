@@ -15,3 +15,4 @@
     - [x] Fix AI "No valid moves" error
     - [x] Fix Bear-Off logic issues
     - [x] **Fix move validation bug (players losing 50% of moves)**
+    - [x] **Fix human auto-roll bug (first roll phase)**
