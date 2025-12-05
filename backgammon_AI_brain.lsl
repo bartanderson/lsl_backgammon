@@ -38,6 +38,7 @@ integer W_ANCHOR = 50;         // Reward for holding an anchor in opponent's hom
 integer W_BAR_SELF = -80;      // Penalty for having a piece on the bar
 integer W_BAR_OPP = 60;        // Reward for sending opponent to the bar (hitting)
 integer W_PIP_WEIGHT = 1;      // Multiplier for pip count difference
+integer W_BEAR_OFF = 100;      // Reward for bearing off a piece
 
 string generateHomeBoardMove() {
     if (DEBUG_MODE) llOwnerSay("DEBUG BRAIN: generateHomeBoardMove for " + currentTurn);
@@ -739,6 +740,9 @@ integer evaluateBoard(list board, string playerColor, integer ourOffCount, integ
     // 4. Bar Penalty
     score += ourBarCount * W_BAR_SELF; // Heavy penalty for being on bar
     score += oppBarCount * W_BAR_OPP; // Reward for hitting opponent
+    
+    // 5. Bear Off Bonus
+    score += ourOffCount * W_BEAR_OFF;
     
     return score;
 }
