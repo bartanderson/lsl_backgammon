@@ -770,6 +770,24 @@ default {
             
             if (uuid != "") showStatusIcon(uuid);
         }
+        else if (command == "FIRST_TURN") {
+            string player = llList2String(params, 1);
+            integer d1 = llList2Integer(params, 2);
+            integer d2 = llList2Integer(params, 3);
+            
+            // 1. Turn Indicator
+            if (turnIndicatorLink > 0) {
+                vector color = <1,1,1>; // White
+                if (player == "black") color = <0,0,0>; // Black
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+            }
+            
+            // 2. Show Winner's Dice (and hide loser's)
+            showPlayerDice(player);
+            
+            // 3. Update Dice Values
+            updateDiceValues(player, d1, d2);
+        }
         else if (command == "TURN_CHANGE") {
             string newTurn = llList2String(params, 1);
             
