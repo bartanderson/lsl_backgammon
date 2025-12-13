@@ -24,6 +24,25 @@ integer bdie4Link = -1;
 integer gIsDoubles = FALSE;
 integer FROM_BAR = -2;
 
+// UUIDs for Status Images
+string UUID_NOT_YOUR_TURN = "3261a0eb-dfaf-97bf-c540-ea2ef20af175";
+string UUID_NOT_YOUR_PIECE = "eba0c4b0-f618-74c8-ffac-c4b63b6c5443";
+string UUID_NO_VALID_MOVES = "e0415315-4b10-930c-933d-47ba85ba6c92";
+string UUID_HIT = "d635a1f0-a520-cf2a-fdb7-3d8eb63433fc";
+string UUID_BEAR_OFF = "abe37417-abdf-85c2-9454-9766515ecdde";
+
+showStatusIcon(string uuid) {
+     if (whiteStatusLink > 0) {
+         llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+         llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
+     }
+     if (blackStatusLink > 0) {
+         llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+         llSetLinkAlpha(blackStatusLink, 1.0, ALL_SIDES);
+     }
+     llSetTimerEvent(2.5);
+}
+
 // Storage Tuning
 float STORAGE_U_TOP = 1.08; // Beyond right edge (top storage)
 float STORAGE_U_BOTTOM = 1.08; // Beyond right edge (bottom storage)
@@ -720,13 +739,12 @@ default {
                 llSetTimerEvent(1.0); 
             }
             
-             if (whiteStatusLink > 0) {
-                 llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXT, error, <1,0,0>, 1.0]);
-             }
-             if (blackStatusLink > 0) {
-                 llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXT, error, <1,0,0>, 1.0]);
-             }
-             llSetTimerEvent(2.0);
+            string uuid = "";
+            if (error == "NOT_YOUR_TURN") uuid = UUID_NOT_YOUR_TURN;
+            else if (error == "NOT_YOUR_PIECE") uuid = UUID_NOT_YOUR_PIECE;
+            else if (error == "NO_MOVES") uuid = UUID_NO_VALID_MOVES;
+            
+            if (uuid != "") showStatusIcon(uuid);
         }
         else if (command == "TURN_CHANGE") {
             string newTurn = llList2String(params, 1);
@@ -847,6 +865,8 @@ default {
                 BlackBarList += [piece];
                 if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
             }
+            
+            showStatusIcon(UUID_HIT);
         }
         else if(command == "BEAR_OFF_PIECE") {
             string piece = llList2String(params, 1);
@@ -865,6 +885,8 @@ default {
             else color = 1;
             
             Arrange(color, from_point);
+            
+            showStatusIcon(UUID_BEAR_OFF);
         }
         else if (command == "DICE_ROLL") {
             string player = llList2String(params, 1);
