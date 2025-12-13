@@ -8,12 +8,12 @@ list WhiteBarList;
 list BlackBarList;
 list faceRotations;
 
-integer silver1MarkerLink = -1;
-integer silver2MarkerLink = -1;
-integer goldMarkerLink = -1;
-integer turnIndicatorLink = -1;
-integer whiteStatusLink = -1;
-integer blackStatusLink = -1;
+integer silver1MarkerLink = 0;
+integer silver2MarkerLink = 0;
+integer goldMarkerLink = 0;
+integer turnIndicatorLink = 0;
+integer whiteStatusLink = 0;
+integer blackStatusLink = 0;
 
 // Extra Dice Links
 integer wdie3Link = -1;
@@ -83,6 +83,9 @@ setDiePosition(string dieName, float u, float v, integer isVisible) {
         z = localHeight + 0.03; // On table surface + half die height
     } else {
         z = localHeight - 0.07; // Hidden below table
+        // For hidden dice, force them to center to avoid edge popping
+        x = 0.0;
+        y = 0.0;
     }
     
     vector localPos = <x, y, z>;
@@ -619,6 +622,14 @@ default {
         wdie4Link = GetLinkNumber("wdie4");
         bdie3Link = GetLinkNumber("bdie3");
         bdie4Link = GetLinkNumber("bdie4");
+        
+        if (DEBUG_MODE) {
+            llOwnerSay("DEBUG RENDER LINK STATUS:");
+            llOwnerSay("Turn Indicator: " + (string)turnIndicatorLink);
+            llOwnerSay("White Status: " + (string)whiteStatusLink);
+            llOwnerSay("Black Status: " + (string)blackStatusLink);
+            llOwnerSay("Extra Dice: W3=" + (string)wdie3Link + " W4=" + (string)wdie4Link + " B3=" + (string)bdie3Link + " B4=" + (string)bdie4Link);
+        }
         
         init_render();
         // Initial state: Storage
