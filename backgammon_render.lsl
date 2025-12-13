@@ -1000,6 +1000,20 @@ default {
             boardInitialized = FALSE;
             WhiteBarList = [];
             BlackBarList = [];
+            
+            // Clear status displays
+            if (whiteStatusLink > 0) {
+                llSetLinkTexture(whiteStatusLink, TEXTURE_BLANK, ALL_SIDES);
+                llSetLinkAlpha(whiteStatusLink, 0.0, ALL_SIDES);
+            }
+            if (blackStatusLink > 0) {
+                llSetLinkTexture(blackStatusLink, TEXTURE_BLANK, ALL_SIDES);
+                llSetLinkAlpha(blackStatusLink, 0.0, ALL_SIDES);
+            }
+            // Reset turn indicator (e.g. to neutral or white)
+            if (turnIndicatorLink > 0) {
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+            }
 
             llSleep(0.5); // Small delay to ensure BOARD_STATE is processed
             refreshAllPieces(); // Force immediate refresh on reset
