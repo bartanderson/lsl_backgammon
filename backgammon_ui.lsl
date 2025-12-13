@@ -102,7 +102,13 @@ integer GetAgentLinkNumber(key avatar) {
 sendMessage(string message) {
     if (white != NULL_KEY) llRegionSayTo(white, 0, message);
     if (black != NULL_KEY) llRegionSayTo(black, 0, message);
+    // If testing alone or simulating, owner needs to see it too
     if (white == NULL_KEY && black == NULL_KEY) llOwnerSay(message);
+    else if (white != llGetOwner() && black != llGetOwner()) llOwnerSay(message); // Owner monitoring
+}
+
+sendPrivateMessage(key player, string message) {
+    if (player != NULL_KEY) llRegionSayTo(player, 0, message);
 }
 
 initPointUVs() {
@@ -184,33 +190,48 @@ default {
     
     changed(integer change) {
         if (change & CHANGED_LINK) {
-            key av = llAvatarOnSitTarget();
-            if (av != NULL_KEY) {
-                integer linkNum = GetAgentLinkNumber(av);
-                string linkName = llGetLinkName(linkNum);
-                
-                if (linkName == "white" && white == NULL_KEY) {
-                    white = av;
-                    llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)av, NULL_KEY);
-                    sendMessage(llKey2Name(av) + " is playing white.");
-                    simulating = FALSE;
-                }
-                else if (linkName == "black" && black == NULL_KEY) {
-                    black = av;
-                    llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)av, NULL_KEY);
-                    sendMessage(llKey2Name(av) + " is playing black.");
-                    simulating = FALSE;
+            // Scan linkset to find who is sitting where
+            key newWhite = NULL_KEY;
+            key newBlack = NULL_KEY;
+            
+            integer numLinks = llGetNumberOfPrims();
+            integer i;
+            // Iterate down to avoid messing up if links change? No, links are stable during check
+            // Actually, link numbers for sitting avatars are at the end of the link set.
+            for (i = 1; i <= numLinks; ++i) {
+                key id = llGetLinkKey(i);
+                if (llGetAgentSize(id) != ZERO_VECTOR) { // Is an avatar
+                    string primName = llGetLinkName(i);
+                    if (primName == "white") newWhite = id;
+                    else if (primName == "black") newBlack = id;
                 }
             }
-            else {
-                if (GetAgentLinkNumber(white) == 0) {
+            
+            // Handle White Player Changes
+            if (newWhite != white) {
+                if (newWhite != NULL_KEY) {
+                    white = newWhite;
+                    llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|white|" + (string)white, NULL_KEY);
+                    sendMessage(llKey2Name(white) + " is playing white.");
+                    // Check if simulation was active?
+                    simulating = FALSE; 
+                } else {
+                    sendMessage(llKey2Name(white) + " left the white seat.");
                     llMessageLinked(LINK_ROOT, 0, "PLAYER_LEAVE|white", NULL_KEY);
-                    sendMessage("White player left the game.");
                     white = NULL_KEY;
                 }
-                if (GetAgentLinkNumber(black) == 0) {
+            }
+            
+            // Handle Black Player Changes
+            if (newBlack != black) {
+                if (newBlack != NULL_KEY) {
+                    black = newBlack;
+                    llMessageLinked(LINK_ROOT, 0, "PLAYER_JOIN|black|" + (string)black, NULL_KEY);
+                    sendMessage(llKey2Name(black) + " is playing black.");
+                    simulating = FALSE;
+                } else {
+                    sendMessage(llKey2Name(black) + " left the black seat.");
                     llMessageLinked(LINK_ROOT, 0, "PLAYER_LEAVE|black", NULL_KEY);
-                    sendMessage("Black player left the game.");
                     black = NULL_KEY;
                 }
             }
@@ -426,7 +447,7 @@ default {
             
             // FIRST ROLL: No piece selection allowed
             if (gCurrentState == STATE_FIRST_ROLL) {
-                sendMessage("Please roll the dice first to determine who starts.");
+                sendPrivateMessage(detLinkKey, "Please roll the dice first to determine who starts.");
                 return;
             }
             
@@ -445,7 +466,7 @@ default {
                     sendMessage("Selection cancelled. Not your turn.");
                 } else {
                     llMessageLinked(LINK_SET, 0, "VISUAL_ERROR|" + (string)detLinkKey + "|NOT_YOUR_TURN", NULL_KEY);
-                    // sendMessage("Not your turn."); 
+                    // sendPrivateMessage(detLinkKey, "Not your turn."); 
                 }
                 return;
             }
@@ -463,7 +484,7 @@ default {
                     marker3Dest = -1;
                     sendMessage("Selection cancelled. Roll dice first.");
                 } else {
-                    sendMessage("You must roll the dice before moving pieces.");
+                    sendPrivateMessage(detLinkKey, "You must roll the dice before moving pieces.");
                 }
                 return;
             }
@@ -482,7 +503,7 @@ default {
                     sendMessage("Selection cancelled. Not your piece.");
                 } else {
                     llMessageLinked(LINK_SET, 0, "VISUAL_ERROR|" + (string)detLinkKey + "|NOT_YOUR_PIECE", NULL_KEY);
-                    // sendMessage("You can only select your own pieces.");
+                    // sendPrivateMessage(detLinkKey, "You can only select your own pieces.");
                 }
                 return;
             }
@@ -534,18 +555,18 @@ default {
             
             // MAIN GAME: Check turn and permissions
             if (player != turn) {
-                sendMessage("Not your turn. It's currently " + turn + "'s turn.");
+                sendPrivateMessage(detLinkKey, "Not your turn. It's currently " + turn + "'s turn.");
                 return;
             }
         
             if (!isPlayerAllowed(detLinkKey, player)) {
-                sendMessage("You can only roll for your own color.");
+                sendPrivateMessage(detLinkKey, "You can only roll for your own color.");
                 return;
             }
             
             // Check if already rolled
             if (currentDie1 > 0 || currentDie2 > 0) {
-                sendMessage("You've already rolled this turn. Make your moves.");
+                sendPrivateMessage(detLinkKey, "You've already rolled this turn. Make your moves.");
                 return;
             }
             
