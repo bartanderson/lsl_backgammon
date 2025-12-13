@@ -1,5 +1,5 @@
 // BACKGAMMON UI - Clean user interface
-integer DEBUG_MODE = TRUE;
+integer DEBUG_MODE = FALSE;
 
 // Game state
 integer simulating = FALSE;
@@ -444,7 +444,8 @@ default {
                     marker3Dest = -1;
                     sendMessage("Selection cancelled. Not your turn.");
                 } else {
-                    sendMessage("Not your turn.");
+                    llMessageLinked(LINK_SET, 0, "VISUAL_ERROR|" + (string)detLinkKey + "|NOT_YOUR_TURN", NULL_KEY);
+                    // sendMessage("Not your turn."); 
                 }
                 return;
             }
@@ -480,7 +481,8 @@ default {
                     marker3Dest = -1;
                     sendMessage("Selection cancelled. Not your piece.");
                 } else {
-                    sendMessage("You can only select your own pieces.");
+                    llMessageLinked(LINK_SET, 0, "VISUAL_ERROR|" + (string)detLinkKey + "|NOT_YOUR_PIECE", NULL_KEY);
+                    // sendMessage("You can only select your own pieces.");
                 }
                 return;
             }
@@ -569,7 +571,19 @@ default {
                 UI_SIMULATING = (integer)stateValue;
                 if (DEBUG_MODE) llOwnerSay("DEBUG UI: Simulating = " + stateValue);
             }
+            else if (stateType == "WHITE_AI") {
+                UI_WHITE_AI = (integer)stateValue;
+                if (DEBUG_MODE) llOwnerSay("DEBUG UI: White AI = " + stateValue);
+            }
+            else if (stateType == "BLACK_AI") {
+                UI_BLACK_AI = (integer)stateValue;
+                if (DEBUG_MODE) llOwnerSay("DEBUG UI: Black AI = " + stateValue);
+            }
             return;
+        }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE) llOwnerSay("ui: Debug mode " + (string)("ON"));
         }
         else if (command == "SET_PLAYER_KEYS") {
             white = (key)llList2String(params, 1);
@@ -775,7 +789,9 @@ default {
                     return; 
                 }
                 
-                sendMessage("No valid moves for this piece.");
+                
+                llMessageLinked(LINK_SET, 0, "VISUAL_ERROR|" + (string)selectedPlayer + "|NO_MOVES", NULL_KEY);
+                // sendMessage("No valid moves for this piece.");
                 
                 // FIX: Ensure markers are hidden if we are deselecting
                 llMessageLinked(LINK_SET, 0, "HIDE_MARKER|1", NULL_KEY);

@@ -3,8 +3,7 @@ list xList; list bList; list wList;
 list BoardList; // Local copy of the board state
 float checkerheight; float localHeight;
 integer boardInitialized = FALSE;
-integer DEBUG_MODE = TRUE; // Add this flag to control debug output
-integer DEBUG_MODE_VERBOSE = FALSE; // way too much details this was all worked out previously, hope not to revisit
+integer DEBUG_MODE = FALSE; // Add this flag to control debug output
 list WhiteBarList;
 list BlackBarList;
 list faceRotations;
@@ -12,6 +11,17 @@ list faceRotations;
 integer silver1MarkerLink = -1;
 integer silver2MarkerLink = -1;
 integer goldMarkerLink = -1;
+integer turnIndicatorLink = -1;
+integer whiteStatusLink = -1;
+integer blackStatusLink = -1;
+
+// Extra Dice Links
+integer wdie3Link = -1;
+integer wdie4Link = -1;
+integer bdie3Link = -1;
+integer bdie4Link = -1;
+
+integer gIsDoubles = FALSE;
 integer FROM_BAR = -2;
 
 // Storage Tuning
@@ -58,7 +68,7 @@ setDiePosition(string dieName, float u, float v, integer isVisible) {
     
     vector localPos = <x, y, z>;
     
-    if (DEBUG_MODE) {
+    if (DEBUG_MODE != FALSE) {
         //llOwnerSay("DEBUG: Positioning " + dieName + " at " + (string)localPos + ", visible: " + (string)isVisible);
     }
     
@@ -67,7 +77,7 @@ setDiePosition(string dieName, float u, float v, integer isVisible) {
 
 // Reset all four dice to default positions
 resetDice() {
-    if (DEBUG_MODE) llOwnerSay("DEBUG: Resetting all four dice to default positions");   
+    if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Resetting all four dice to default positions");   
     // Position white die on white side, black die on black side
     setDiePosition("wdie1", 0.55, 0.55, TRUE);  // White side - bottom right
     setDiePosition("bdie1", 0.45, 0.45, TRUE);  // Black side - top left
@@ -85,7 +95,7 @@ resetDice() {
 
 // Show dice for a specific player's turn
 showPlayerDice(string player) {
-    if (DEBUG_MODE) llOwnerSay("DEBUG: Showing dice for player: " + player);
+    if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Showing dice for player: " + player);
     
     if (player == "white") {
         // Show white dice on WHITE side (bottom), hide black dice
@@ -104,7 +114,7 @@ showPlayerDice(string player) {
 
 // Update dice to show specific values for a player
 updateDiceValues(string player, integer die1, integer die2) {
-    if (DEBUG_MODE) llOwnerSay("DEBUG: Updating dice for " + player + ": " + (string)die1 + ", " + (string)die2);
+    if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Updating dice for " + player + ": " + (string)die1 + ", " + (string)die2);
     
     if (player == "white") {
         rotateDieToValue("wdie1", die1);
@@ -127,7 +137,7 @@ rotateDieToValue(string dieName, integer value) {
         rotation rot = llList2Rot(faceRotations, value - 1);
         llSetLinkPrimitiveParamsFast(linkNum, [PRIM_ROTATION, rot]);
         
-        if (DEBUG_MODE) llOwnerSay("DEBUG: Rotated " + dieName + " to show face " + (string)value);
+        if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Rotated " + dieName + " to show face " + (string)value);
     }
 }
 
@@ -241,14 +251,6 @@ init_render() {
     hideMarker(1);
     hideMarker(2);
     hideMarker(3);
-    if (DEBUG_MODE_VERBOSE) {
-        // Debug output
-        llOwnerSay("Pieces positioned with simple tip bias (0.1) and spacing (0.011)");
-        llOwnerSay("White start: " + (string)whiteStart);
-        llOwnerSay("Black start: " + (string)blackStart);
-        llOwnerSay("wList: " + llDumpList2String(wList, ", "));
-        llOwnerSay("bList: " + llDumpList2String(bList, ", "));
-    }
 }
 
 integer GetLinkNumber(string linkName) {
@@ -268,7 +270,7 @@ updateLocalBoard(string piece, integer from_point, integer to_point) {
         if (idx != -1) {
             pieces = llDeleteSubList(pieces, idx, idx);
             BoardList = llListReplaceList(BoardList, [llDumpList2String(pieces, ",")], from_point, from_point);
-            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: updateLocalBoard removed " + piece + " from point " + (string)from_point);
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: updateLocalBoard removed " + piece + " from point " + (string)from_point);
         }
     }
     
@@ -278,7 +280,7 @@ updateLocalBoard(string piece, integer from_point, integer to_point) {
         if (pointStr == "") pointStr = piece;
         else pointStr += "," + piece;
         BoardList = llListReplaceList(BoardList, [pointStr], to_point, to_point);
-        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: updateLocalBoard added " + piece + " to point " + (string)to_point);
+        if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: updateLocalBoard added " + piece + " to point " + (string)to_point);
     }
 }
 
@@ -337,7 +339,7 @@ Arrange(integer color, integer position) {
     }
 }
 
-ArrangeStorage(integer color) {
+/*ArrangeStorage(integer color) {
     // Move all 15 pieces of color to storage
     // NOTE: White pieces go to TOP storage, black pieces go to BOTTOM storage
     string prefix = "b";  // White color (0) moves black pieces to top
@@ -421,9 +423,62 @@ ArrangeStoragePiece(string pieceName) {
     
     llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos, PRIM_ROTATION, STORAGE_ROT]);
 }
+*/
+// Keep both functions but eliminate duplicate code
+
+ArrangeStorage(integer color) {
+    string prefix = "b";
+    if (color == 1) prefix = "w";
+    
+    integer i;
+    for (i = 1; i <= 15; i++) {
+        positionStoragePiece(color, i, prefix + (string)i);
+    }
+}
+
+ArrangeStoragePiece(string pieceName) {
+    string prefix = llGetSubString(pieceName, 0, 0);
+    integer color = 0;
+    if (prefix == "w") color = 1;
+    
+    integer id = (integer)llGetSubString(pieceName, 1, -1);
+    positionStoragePiece(color, id, pieceName);
+}
+
+// Shared positioning logic
+positionStoragePiece(integer color, integer id, string pieceName) {
+    integer linkNum = GetLinkNumber(pieceName);
+    if (linkNum == 0) return;
+    
+    float uStart;
+    float vStart;
+    if (color == 0) {
+        uStart = STORAGE_U_TOP;
+        vStart = STORAGE_V_TOP;
+    } else {
+        uStart = STORAGE_U_BOTTOM;
+        vStart = STORAGE_V_BOTTOM;
+    }
+    
+    float uPos = uStart;
+    float vPos;
+    
+    if (color == 0) {
+        vPos = vStart + (id * STORAGE_SPACING);
+    } else {
+        vPos = vStart - (id * STORAGE_SPACING);
+    }
+    
+    float zPos = localHeight - (checkerheight * STORAGE_SINK);
+    
+    vector uvCoords = <uPos, vPos, zPos>;
+    vector localPos = ScaledFromUV(uvCoords);
+    
+    llSetLinkPrimitiveParamsFast(linkNum, [PRIM_POSITION, localPos, PRIM_ROTATION, STORAGE_ROT]);
+}
 
 resetToStorage() {
-    if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Moving pieces to storage");
+    if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Moving pieces to storage");
     ArrangeStorage(0); // White
     ArrangeStorage(1); // Black
 }
@@ -492,18 +547,17 @@ hideMarker(integer markerType) {
 }
 
 refreshAllPieces() {
-    if (DEBUG_MODE_VERBOSE) llOwnerSay("DEBUG: refreshAllPieces() called. BoardList length: " + (string)llGetListLength(BoardList));
     
-        // Always update bar pieces first - they have highest priority
-        Arrange(0, 24); // White bar
-        Arrange(1, 25); // Black bar
+    // Always update bar pieces first - they have highest priority
+    Arrange(0, 24); // White bar
+    Arrange(1, 25); // Black bar
     
     // Then update all board points
     integer i;
     for (i = 0; i < 24; i++) {
         string pointState = llList2String(BoardList, i);
         if (llStringLength(pointState) > 0) {
-            if (DEBUG_MODE_VERBOSE) llOwnerSay("Processing point " + (string)(i+1) + ": " + pointState);
+            //if (FALSE) llOwnerSay("Processing point " + (string)(i+1) + ": " + pointState);
             // Determine which color's pieces are at this point
             list pieces = llParseString2List(pointState, [","], []);
             string firstPiece = llList2String(pieces, 0);
@@ -514,8 +568,6 @@ refreshAllPieces() {
             Arrange(color, i);
         }
     }
-    if (DEBUG_MODE_VERBOSE) llOwnerSay("Finished refreshAllPieces()");
-
 }
 
 default {
@@ -523,9 +575,28 @@ default {
         silver1MarkerLink = GetLinkNumber("silver1");
         silver2MarkerLink = GetLinkNumber("silver2");
         goldMarkerLink = GetLinkNumber("gold");
+        
+        turnIndicatorLink = GetLinkNumber("turn_indicator");
+        whiteStatusLink = GetLinkNumber("status_display_white");
+        blackStatusLink = GetLinkNumber("status_display_black");
+        
+        wdie3Link = GetLinkNumber("wdie3");
+        wdie4Link = GetLinkNumber("wdie4");
+        bdie3Link = GetLinkNumber("bdie3");
+        bdie4Link = GetLinkNumber("bdie4");
+        
         init_render();
         // Initial state: Storage
         resetToStorage();
+    }
+    
+    timer() {
+        llSetTimerEvent(0.0);
+        // Clear status displays
+        if (whiteStatusLink > 0) llSetLinkTexture(whiteStatusLink, TEXTURE_BLANK, ALL_SIDES); // Or hide
+        if (blackStatusLink > 0) llSetLinkTexture(blackStatusLink, TEXTURE_BLANK, ALL_SIDES);
+        if (whiteStatusLink > 0) llSetLinkAlpha(whiteStatusLink, 0.0, ALL_SIDES);
+        if (blackStatusLink > 0) llSetLinkAlpha(blackStatusLink, 0.0, ALL_SIDES);
     }
     
     link_message(integer sender_num, integer num, string str, key id) {
@@ -551,11 +622,9 @@ default {
                     }
                 }
             }
-            llOwnerSay("DEBUG RENDER: BOARD_STATE received - " +
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: BOARD_STATE received - " +
                        "WhiteOnBoard: " + (string)whiteOnBoard +
                        " BlackOnBoard: " + (string)blackOnBoard);
-            
-            if (DEBUG_MODE_VERBOSE) llOwnerSay("DEBUG: Received BOARD_STATE message: " + str + (string)(len));
             
             BoardList = llList2List(params, 1, 24);
             
@@ -564,14 +633,18 @@ default {
             
             refreshAllPieces();
             
-            llOwnerSay("DEBUG RENDER: Finished processing BOARD_STATE");
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Finished processing BOARD_STATE");
         }
         else if (command == "START_FIRST_ROLL") {
-            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: START_FIRST_ROLL received - Arranging pieces for game start");
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: START_FIRST_ROLL received - Arranging pieces for game start");
             refreshAllPieces();
         }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE != FALSE) llOwnerSay("render: Debug mode " + (string)("ON"));
+        }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
-            if (DEBUG_MODE) llOwnerSay("DEBUG: Positioning dice for first roll");        
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Positioning dice for first roll");        
             // Position white die and black die at corners
             setDiePosition("wdie1", 0.55, 0.55, TRUE);
             setDiePosition("bdie1", 0.45, 0.45, TRUE);
@@ -582,7 +655,7 @@ default {
         }
         else if (command == "SHOW_PLAYER_DICE") {
             string player = llList2String(params, 1);
-            if (DEBUG_MODE) llOwnerSay("DEBUG: Showing dice for player: " + player);
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Showing dice for player: " + player);
             
             if (player == "white") {
                 // Show white dice, hide black dice
@@ -600,18 +673,73 @@ default {
             }
         }
         else if (command == "HIDE_ALL_DICE") {
-            if (DEBUG_MODE) llOwnerSay("DEBUG: Hiding all dice");
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Hiding all dice");
             
             setDiePosition("wdie1", 0.55, 0.55, FALSE);
             setDiePosition("wdie2", 0.45, 0.55, FALSE);
             setDiePosition("bdie1", 0.45, 0.45, FALSE);
             setDiePosition("bdie2", 0.55, 0.45, FALSE);
         }
+        else if (command == "DICE_REMAINING") {
+             string player = llList2String(params, 1);
+             integer u1 = llList2Integer(params, 2);
+             integer u2 = llList2Integer(params, 3);
+             integer movesLeft = -1;
+             if (llGetListLength(params) > 4) movesLeft = llList2Integer(params, 4);
+             
+             if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: DICE_REMAINING - " + player + " u1:" + (string)u1 + " u2:" + (string)u2 + " moves:" + (string)movesLeft);
+             
+             if (gIsDoubles) {
+                 if (movesLeft != -1) {
+                     integer d1Alpha = 1; integer d2Alpha = 1; integer d3Alpha = 1; integer d4Alpha = 1;
+                     if (movesLeft < 4) d4Alpha = 0; 
+                     if (movesLeft < 3) d3Alpha = 0;
+                     if (movesLeft < 2) d2Alpha = 0;
+                     if (movesLeft < 1) d1Alpha = 0;
+                     
+                     string p = (player == "white") ? "w" : "b";
+                     llSetLinkAlpha(GetLinkNumber(p+"die1"), d1Alpha, ALL_SIDES);
+                     llSetLinkAlpha(GetLinkNumber(p+"die2"), d2Alpha, ALL_SIDES);
+                     llSetLinkAlpha(GetLinkNumber(p+"die3"), d3Alpha, ALL_SIDES);
+                     llSetLinkAlpha(GetLinkNumber(p+"die4"), d4Alpha, ALL_SIDES);
+                 }
+             } else {
+                 integer d1Alpha = (u1 > 0);
+                 integer d2Alpha = (u2 > 0);
+                 string p = (player == "white") ? "w" : "b";
+                 llSetLinkAlpha(GetLinkNumber(p+"die1"), d1Alpha, ALL_SIDES);
+                 llSetLinkAlpha(GetLinkNumber(p+"die2"), d2Alpha, ALL_SIDES);
+             }
+        }
+        else if (command == "VISUAL_ERROR") {
+            key playerKey = (key)llList2String(params, 1);
+            string error = llList2String(params, 2);
+            
+            if (turnIndicatorLink > 0) {
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
+                llSetTimerEvent(1.0); 
+            }
+            
+             if (whiteStatusLink > 0) {
+                 llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXT, error, <1,0,0>, 1.0]);
+             }
+             if (blackStatusLink > 0) {
+                 llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXT, error, <1,0,0>, 1.0]);
+             }
+             llSetTimerEvent(2.0);
+        }
         else if (command == "TURN_CHANGE") {
             string newTurn = llList2String(params, 1);
             
             // Show dice for the player whose turn it is
             showPlayerDice(newTurn);
+            
+            // Turn Indicator
+            if (turnIndicatorLink > 0) {
+                vector color = <1,1,1>; // White
+                if (newTurn == "black") color = <0,0,0>; // Black
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+            }
         }
         else if(command == "BAR_STATE") {
             // The bar pieces are all parameters after the first one
@@ -631,7 +759,7 @@ default {
                 }
             }
 
-            if (DEBUG_MODE) {
+            if (DEBUG_MODE != FALSE){
                 llOwnerSay("DEBUG RENDER: BAR_STATE received - White: " + llDumpList2String(WhiteBarList, ",") + 
                           " Black: " + llDumpList2String(BlackBarList, ","));
             }
@@ -652,7 +780,7 @@ default {
             integer from_point = llList2Integer(params, 2);
             integer to_point = llList2Integer(params, 3);
             
-            if (DEBUG_MODE) {
+            if (DEBUG_MODE != FALSE) {
                 llOwnerSay("DEBUG RENDER: MOVE_PIECE - " + piece + " from " + (string)from_point + " to " + (string)to_point);
             }
             
@@ -670,13 +798,13 @@ default {
                     integer index = llListFindList(WhiteBarList, [piece]);
                     if (index != -1) {
                         WhiteBarList = llDeleteSubList(WhiteBarList, index, index);
-                        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from WhiteBarList");
+                        if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from WhiteBarList");
                     }
                 } else {
                     integer index = llListFindList(BlackBarList, [piece]);
                     if (index != -1) {
                         BlackBarList = llDeleteSubList(BlackBarList, index, index);
-                        if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from BlackBarList");
+                        if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Removed " + piece + " from BlackBarList");
                     }
                 }
                 // Update bar display immediately
@@ -697,7 +825,7 @@ default {
             integer color = llList2Integer(params, 1);
             integer point = llList2Integer(params, 2);
             
-            if (DEBUG_MODE) {
+            if (DEBUG_MODE != FALSE) {
                 llOwnerSay("DEBUG: Arranging point " + (string)point + " for color " + (string)color);
             }
             
@@ -707,24 +835,24 @@ default {
             string piece = llList2String(params, 1);
             integer from_point = llList2Integer(params, 2);
             
-            if (DEBUG_MODE) {
+            if (DEBUG_MODE != FALSE) {
                 llOwnerSay("DEBUG RENDER: HIT_PIECE received - " + piece + " from point " + (string)from_point);
             }
             
             // ONLY update bar lists - BOARD_STATE will handle actual piece movement
             if (llGetSubString(piece, 0, 0) == "w") {
                 WhiteBarList += [piece];
-                if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to WhiteBarList");
+                if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Added " + piece + " to WhiteBarList");
             } else {
                 BlackBarList += [piece];
-                if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
+                if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Added " + piece + " to BlackBarList");
             }
         }
         else if(command == "BEAR_OFF_PIECE") {
             string piece = llList2String(params, 1);
             integer from_point = llList2Integer(params, 2);
             
-            if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Bear off piece " + piece + " from " + (string)from_point);
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Bear off piece " + piece + " from " + (string)from_point);
             
             // Update local BoardList immediately (to_point = -1 for bear-off)
             updateLocalBoard(piece, from_point, -1);
@@ -743,7 +871,7 @@ default {
             integer die1 = llList2Integer(params, 2);
             integer die2 = llList2Integer(params, 3);
             
-            if (DEBUG_MODE) llOwnerSay("DEBUG: Animating dice roll for " + player + ": " + (string)die1 + ", " + (string)die2);
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Animating dice roll for " + player + ": " + (string)die1 + ", " + (string)die2);
             
             animateDiceRoll(player, die1, die2);
         }
@@ -752,9 +880,61 @@ default {
             integer die1 = llList2Integer(params, 2);
             integer die2 = llList2Integer(params, 3);
             
-            if (DEBUG_MODE) llOwnerSay("DEBUG: Showing dice result for " + player + ": " + (string)die1 + ", " + (string)die2);
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Showing dice result for " + player + ": " + (string)die1 + ", " + (string)die2);
             
-            // Show the appropriate player's dice
+            // Check for Doubles
+            gIsDoubles = (die1 == die2);
+            
+            if (player == "white") {
+                // Show white dice, hide black dice
+                setDiePosition("wdie1", 0.55, 0.55, TRUE);
+                setDiePosition("wdie2", 0.45, 0.55, TRUE);
+                llSetLinkAlpha(GetLinkNumber("wdie1"), 1.0, ALL_SIDES); // Reset Alpha
+                llSetLinkAlpha(GetLinkNumber("wdie2"), 1.0, ALL_SIDES);
+                
+                if (gIsDoubles) {
+                    setDiePosition("wdie3", 0.65, 0.65, TRUE); // Placeholder positions
+                    setDiePosition("wdie4", 0.35, 0.35, TRUE);
+                    rotateDieToValue("wdie3", die1);
+                    rotateDieToValue("wdie4", die1);
+                    llSetLinkAlpha(GetLinkNumber("wdie3"), 1.0, ALL_SIDES);
+                    llSetLinkAlpha(GetLinkNumber("wdie4"), 1.0, ALL_SIDES);
+                } else {
+                     setDiePosition("wdie3", 0.5, 0.5, FALSE);
+                     setDiePosition("wdie4", 0.5, 0.5, FALSE);
+                }
+                
+                setDiePosition("bdie1", 0.45, 0.45, FALSE);
+                setDiePosition("bdie2", 0.55, 0.45, FALSE);
+                setDiePosition("bdie3", 0.5, 0.5, FALSE);
+                setDiePosition("bdie4", 0.5, 0.5, FALSE);
+                
+            } else {
+                // Black
+                setDiePosition("bdie1", 0.45, 0.45, TRUE);
+                setDiePosition("bdie2", 0.55, 0.45, TRUE);
+                llSetLinkAlpha(GetLinkNumber("bdie1"), 1.0, ALL_SIDES);
+                llSetLinkAlpha(GetLinkNumber("bdie2"), 1.0, ALL_SIDES);
+                
+                if (gIsDoubles) {
+                    setDiePosition("bdie3", 0.65, 0.35, TRUE); 
+                    setDiePosition("bdie4", 0.35, 0.65, TRUE);
+                    rotateDieToValue("bdie3", die1);
+                    rotateDieToValue("bdie4", die1);
+                    llSetLinkAlpha(GetLinkNumber("bdie3"), 1.0, ALL_SIDES);
+                    llSetLinkAlpha(GetLinkNumber("bdie4"), 1.0, ALL_SIDES);
+                } else {
+                     setDiePosition("bdie3", 0.5, 0.5, FALSE);
+                     setDiePosition("bdie4", 0.5, 0.5, FALSE);
+                }
+                
+                setDiePosition("wdie1", 0.55, 0.55, FALSE);
+                setDiePosition("wdie2", 0.45, 0.55, FALSE);
+                setDiePosition("wdie3", 0.5, 0.5, FALSE);
+                setDiePosition("wdie4", 0.5, 0.5, FALSE);
+            }
+            
+            updateDiceValues(player, die1, die2);
             showPlayerDice(player);
             
             // Update the dice to show the correct values
@@ -784,14 +964,14 @@ default {
             hideMarker(3);
             
             resetDice();
-            if (DEBUG_MODE) {
+            if (DEBUG_MODE != FALSE) {
                 llOwnerSay("DEBUG: Render state reset and refreshed");
             }
             // Move to storage on reset
             resetToStorage();
         }
         else if (command == "GAME_OVER") {
-             if (DEBUG_MODE) llOwnerSay("DEBUG RENDER: Game Over received - waiting 2s then storage");
+             if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG RENDER: Game Over received - waiting 2s then storage");
              llSleep(2.0);
              resetToStorage();
         }

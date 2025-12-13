@@ -1,0 +1,79 @@
+﻿
+AUDIT: 'No valid moves' detected at line: [16:32] Backgammon: No valid moves for this piece.
+  Turn: black
+  Dice: [6]
+
+AUDIT: 'No valid moves' detected at line: [16:33] Backgammon: No valid moves for this piece.
+  Turn: black
+  Dice: [1]
+
+AUDIT: 'No valid moves' detected at line: [16:34] Backgammon: No valid moves for this piece.
+  Turn: black
+  Dice: [2]
+
+AUDIT: 'No valid moves' detected at line: [16:36] Backgammon: No valid moves for this piece.
+  Turn: white
+  Dice: [3, 6]
+
+AUDIT: 'No valid moves' detected at line: [16:39] Backgammon: No valid moves for this piece.
+  Turn: black
+  Dice: [6]
+
+AUDIT: 'No valid moves' detected at line: [16:46] Backgammon: No valid moves for this piece.
+  Turn: white
+  Dice: [3, 3, 3, 3]
+
+AUDIT: 'No valid moves' detected at line: [16:51] Backgammon: No valid moves for this piece.
+  Turn: white
+  Dice: [6]
+--------------------------------------------------
+AUDIT ALERT at Line 710: [16:32] Backgammon: No valid moves for this piece.
+Context: Turn=black, Dice=[6]
+Selected Piece: Pos=16, Color=0
+FAILURE: The game said 'No moves', but I found: ['16->22 (Die 6)']
+Board State around 16:
+  Point 10: []
+  Point 11: ['w', 'w', 'w', 'w']
+  Point 12: ['b', 'b', 'b']
+  Point 13: []
+  Point 14: []
+  Point 15: []
+  Point 16: ['w', 'w', 'w']
+  Point 17: ['w']
+  Point 18: ['w', 'w', 'w', 'w', 'w']
+  Point 19: []
+  Point 20: ['b']
+  Point 21: []
+  Point 22: []
+  White Bar: [], Black Bar: []
+  White Off: 0, Black Off: 0
+--------------------------------------------------
+AUDIT ALERT at Line 882: [16:33] Backgammon: No valid moves for this piece.
+Context: Turn=black, Dice=[1]
+Selected Piece: Pos=17, Color=0
+SUCCESS: Correctly rejected. No valid moves found.
+--------------------------------------------------
+AUDIT ALERT at Line 1339: [16:34] Backgammon: No valid moves for this piece.
+Context: Turn=black, Dice=[2]
+Selected Piece: Pos=1, Color=0
+SUCCESS: Correctly rejected. No valid moves found.
+--------------------------------------------------
+AUDIT ALERT at Line 1749: [16:36] Backgammon: No valid moves for this piece.
+Context: Turn=white, Dice=[3, 6]
+Selected Piece: Pos=0, Color=0
+SUCCESS: Correctly rejected. No valid moves found.
+--------------------------------------------------
+AUDIT ALERT at Line 2715: [16:39] Backgammon: No valid moves for this piece.
+Context: Turn=black, Dice=[6]
+Selected Piece: Pos=6, Color=0
+SUCCESS: Correctly rejected. No valid moves found.
+--------------------------------------------------
+AUDIT ALERT at Line 4692: [16:46] Backgammon: No valid moves for this piece.
+Context: Turn=white, Dice=[3, 3, 3, 3]
+Selected Piece: Pos=20, Color=0
+SUCCESS: Correctly rejected. No valid moves found.
+--------------------------------------------------
+AUDIT ALERT at Line 6329: [16:51] Backgammon: No valid moves for this piece.
+Context: Turn=white, Dice=[6]
+Selected Piece: Pos=22, Color=0
+SUCCESS: Correctly rejected. No valid moves found.

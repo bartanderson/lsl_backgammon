@@ -1,5 +1,5 @@
 // BACKGAMMON AI BRAIN - Pure Logic
-integer DEBUG_MODE = TRUE;
+integer DEBUG_MODE = FALSE;
 integer AI_LEVEL = 1;
 integer gWhiteAILevel = 1;
 integer gBlackAILevel = 1;
@@ -1078,6 +1078,10 @@ default {
             
             if (player == "white") gWhiteAILevel = level;
             else if (player == "black") gBlackAILevel = level;
+        }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE) llOwnerSay("AI_brain: Debug mode " + (string)("ON"));
         }
         else if (command == "AI_THINK") {
             currentTurn = llList2String(params, 1);

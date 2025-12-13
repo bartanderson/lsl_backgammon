@@ -56,6 +56,9 @@
     *   Use descriptive messages explaining *what* changed and *why*.
 *   **Safety**:
     *   Always ensure the code compiles (if possible to check) or is at least syntactically plausible before committing.
+*   **Pushing**:
+    *   **PUSH** changes to the remote repository frequently to back up work and enable collaboration.
+    *   Run `git push origin main` (or appropriate branch) after significant commits or at the end of a session.
 
 ## 4. Agent Behavior
 *   **Initialization**:

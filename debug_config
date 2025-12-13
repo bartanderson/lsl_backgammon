@@ -1,0 +1,19 @@
+# Backgammon Debug Configuration
+# Set logging levels: 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+# 
+# GLOBAL sets the default level for all scripts
+# Individual script overrides can be set below
+#
+# Script names: CORE, UI, RENDER, MENU, AI, AI_BRAIN, PERSISTENCE
+
+# Global default (applies to all unless overridden)
+GLOBAL=3
+
+# Per-script overrides (uncomment and adjust as needed)
+#CORE=4
+#UI=3
+#RENDER=2
+#MENU=1
+#AI=4
+#AI_BRAIN=4
+#PERSISTENCE=2

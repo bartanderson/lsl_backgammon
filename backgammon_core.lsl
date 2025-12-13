@@ -1,5 +1,5 @@
 // BACKGAMMON CORE - Optimized game logic
-integer DEBUG_MODE = TRUE; // Reduced for production
+integer DEBUG_MODE = FALSE; // Reduced for production
 
 // Game constants
 integer BOARD_SIZE = 24;
@@ -938,6 +938,10 @@ default {
             if (stateType == "WHITE_AI") CORE_WHITE_AI = (integer)stateValue;
             else if (stateType == "BLACK_AI") CORE_BLACK_AI = (integer)stateValue;
         }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE) llOwnerSay("core: Debug mode " + (string)("ON"));
+        }
         else if (command == "START_FIRST_ROLL") {
             if (gCurrentState == STATE_RESET && whitePresent && blackPresent) {
                 gCurrentState = STATE_FIRST_ROLL;
@@ -1187,6 +1191,3 @@ default {
         }
     }
 }
-
-
-

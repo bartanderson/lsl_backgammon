@@ -288,16 +288,6 @@ handleMenuResponse(string message) {
         llRegionSayTo(menu_user, 0, "Game resetting...");
         return;
     }
-    else if (message == "Save") {
-        llMessageLinked(LINK_SET, 0, "SAVE_GAME_REQUEST", NULL_KEY);
-    }
-    else if (message == "Load") {
-        menu_channel = 0;
-        menu_listener = llListen(menu_channel, "", menu_user, "");
-        llRegionSayTo(menu_user, 0, "Please type: /loadgame [SAVE_CODE]");
-        llRegionSayTo(menu_user, 0, "Or paste the entire save code in chat.");
-        llSetTimerEvent(60.0);
-    }
     else if (message == "AI Level") {
         // Deprecated button, but if hit, show for both? 
         // Or just remove this block if button is gone.
@@ -393,36 +383,12 @@ default {
             if (message == "Back") {
                 showMainMenu(menu_user);
             }
-            else if (message == "Debug Test") {
-                llMessageLinked(LINK_SET, 0, "RUN_TESTS", NULL_KEY);
-                llRegionSayTo(id, 0, "Starting comprehensive data transfer tests...");
-            }
-            else if (message == "Run Tests") {
-                llMessageLinked(LINK_SET, 0, "RUN_DATA_DRIVEN_TESTS|COMPREHENSIVE_DATA_FLOW", NULL_KEY);
-                llRegionSayTo(id, 0, "Starting data-driven comprehensive tests...");
-                return;
-            }
             else if (llListFindList(["Both Human", "Both AI", "White AI", "Black AI", "Swap"], [message]) != -1) {
                 handleAIControlResponse(message);
             }
 
             else {
                 handleMenuResponse(message);
-            }
-        }
-        else if (channel == 0) {
-            if (llGetSubString(message, 0, 9) == "/loadgame ") {
-                string savedState = llGetSubString(message, 10, -1);
-                llMessageLinked(LINK_SET, 0, "LOAD_GAME_STATE|" + savedState, NULL_KEY);
-                llRegionSayTo(menu_user, 0, "Loading game state...");
-                llListenRemove(menu_listener);
-                llSetTimerEvent(0.0);
-            }
-            else if (llGetSubString(message, 0, 13) == "GAME_FRAGMENTS:") {
-                llMessageLinked(LINK_SET, 0, "LOAD_GAME_STATE|" + message, NULL_KEY);
-                llRegionSayTo(menu_user, 0, "Loading game state...");
-                llListenRemove(menu_listener);
-                llSetTimerEvent(0.0);
             }
         }
     }
@@ -434,6 +400,10 @@ default {
         if (command == "SHOW_MAIN_MENU") {
             menu_user = (key)llList2String(params, 1);
             showMainMenu(menu_user);
+        }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE) llOwnerSay("menu: Debug mode " + (string)("ON"));
         }
         else if (command == "UPDATE_GAME_STATE") {
             currentTurn = llList2String(params, 1);
@@ -459,13 +429,6 @@ default {
                 }
             }
         }
-        else if (command == "CHECK_PAUSE_STATE") {
-            if ((currentTurn == "white" && (whitePlayer == NULL_KEY || gWhiteAI)) || 
-                (currentTurn == "black" && (blackPlayer == NULL_KEY || gBlackAI))) {
-                llSleep(2.0);
-                llMessageLinked(LINK_SET, 0, "AI_REQUEST_MOVE", NULL_KEY);
-            }
-        }
     }
     
     timer() {
@@ -476,4 +439,3 @@ default {
         }
     }
 }
-

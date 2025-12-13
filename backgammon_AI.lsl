@@ -1,5 +1,5 @@
 // BACKGAMMON AI MAIN (PUPPET) - Interface
-integer DEBUG_MODE = TRUE;
+integer DEBUG_MODE = FALSE;
 integer AI_LEVEL = 1; // Fallback
 integer gWhiteAILevel = 1;
 integer gBlackAILevel = 1;
@@ -64,6 +64,10 @@ default {
                 llMessageLinked(LINK_SET, 0, "SET_AI_LEVEL|black|" + (string)gBlackAILevel, NULL_KEY);
             }
             return;
+        }
+        else if (command == "DEBUG_STATE") {
+            DEBUG_MODE = (integer)llList2String(params, 1);
+            if (DEBUG_MODE) llOwnerSay("AI: Debug mode " + (string)("ON"));
         }
         else if (command == "SET_AI_LEVEL") {
             string player = llList2String(params, 1);

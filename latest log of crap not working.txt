@@ -1,0 +1,92 @@
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 1
+[13:13] Bar: DEBUG: Rotated bdie2 to show face 1
+[13:13] Bar: DEBUG: Render state reset and refreshed
+[13:13] Bar: DEBUG RENDER: Moving pieces to storage
+[13:13] Backgammon: DEBUG: Touch detected - State: 0, Turn: ''
+[13:13] Backgammon: DEBUG: Touched: MENU, Key: 298c82f0-e5fd-4083-9c3e-941007e6f5d1
+[13:13] Backgammon: DEBUG: handleAIControlResponse: Both AI, simulating: 0
+[13:13] Backgammon: DEBUG UI: Simulating = 1
+[13:13] Backgammon: AI vs AI mode activated
+[13:13] Backgammon: DEBUG AI: White controlled = 1
+[13:13] Backgammon: DEBUG AI: Black controlled = 1
+[13:13] Backgammon: DEBUG UI: Simulating = 1
+[13:13] Backgammon: DEBUG AI: White controlled = 1
+[13:13] Backgammon: DEBUG AI: Black controlled = 1
+[13:13] Backgammon: White AI set to Beginner
+[13:13] Backgammon: DEBUG AI: AI Level set to 0
+[13:13] Backgammon: DEBUG UI: Simulating = 1
+[13:13] Backgammon: DEBUG AI: White controlled = 1
+[13:13] Backgammon: DEBUG AI: Black controlled = 1
+[13:13] Backgammon: Black AI set to Advanced
+[13:13] Backgammon: DEBUG AI: AI Level set to 0
+[13:13] Backgammon: DEBUG UI: Simulating = 1
+[13:13] Backgammon: DEBUG AI: White controlled = 1
+[13:13] Backgammon: DEBUG AI: Black controlled = 1
+[13:13] Backgammon: Starting AI vs AI game...
+[13:13] Backgammon: DEBUG UI: Simulating = 1
+[13:13] Backgammon: DEBUG: Sending SET_PLAYER_KEYS to UI
+[13:13] Backgammon: DEBUG AI: White controlled = 1
+[13:13] Backgammon: DEBUG AI: Black controlled = 1
+[13:13] Bar: DEBUG RENDER: START_FIRST_ROLL received - Arranging pieces for game start
+[13:13] Backgammon: Both players seated. Please click your dice to roll for first turn.
+[13:13] Bar: DEBUG: Positioning dice for first roll
+[13:13] Bar: DEBUG RENDER: START_FIRST_ROLL received - Arranging pieces for game start
+[13:13] Backgammon: Both players seated. Please click your dice to roll for first turn.
+[13:13] Backgammon: white rolled 6
+[13:13] Bar: DEBUG: Positioning dice for first roll
+[13:13] Bar: DEBUG: Animating dice roll for white: 6, 0
+[13:13] Bar: DEBUG: Rotated wdie1 to show face 6
+[13:13] Bar: DEBUG: Animating dice roll for black: 6, 0
+[13:13] Backgammon: black rolled 6
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 6
+[13:13] Backgammon: Roll again, tied values.
+[13:13] Bar: DEBUG: Animating dice roll for white: 6, 4
+[13:13] Backgammon: white rolled 6 and 4
+[13:13] Bar: DEBUG: Rotated wdie1 to show face 6
+[13:13] Bar: DEBUG: Rotated wdie2 to show face 4
+[13:13] Bar: DEBUG: Animating dice roll for black: 3, 4
+[13:13] Backgammon: black rolled 3 and 4
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 3
+[13:13] Bar: DEBUG: Rotated bdie2 to show face 4
+[13:13] Backgammon: white wins the first roll and will play first with 6 and 3
+[13:13] Bar: DEBUG: Showing dice for player: white
+[13:13] Bar: DEBUG: Showing dice result for white: 6, 3
+[13:13] Bar: DEBUG: Showing dice for player: white
+[13:13] Bar: DEBUG: Updating dice for white: 6, 3
+[13:13] Bar: DEBUG: Rotated wdie1 to show face 6
+[13:13] Bar: DEBUG: Rotated wdie2 to show face 3
+[13:13] Bar: DEBUG: Showing dice for player: white
+[13:13] Backgammon: DEBUG AI: Processing AI turn for white
+[13:13] Backgammon: DEBUG AI: Received FRESH_BOARD_STATE, syncing Brain
+[13:13] Backgammon: DEBUG BRAIN: SYNC_BOARD complete - WhiteBar=0 BlackBar=0
+[13:13] Backgammon: *** NEW CODE LOADED *** BRAIN Level 0 generating move for white with dice 6,3
+[13:13] Backgammon: DEBUG BRAIN: No valid moves found
+[13:13] Backgammon: DEBUG AI: Brain returned NO_MOVE
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Backgammon: Turn changed to: black
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Bar: DEBUG: Animating dice roll for black: 3, 2
+[13:13] Backgammon: black rolled 3 and 2
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 3
+[13:13] Bar: DEBUG: Rotated bdie2 to show face 2
+[13:13] Bar: DEBUG: Showing dice result for black: 3, 2
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Bar: DEBUG: Updating dice for black: 3, 2
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 3
+[13:13] Bar: DEBUG: Rotated bdie2 to show face 2
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Backgammon: DEBUG AI: Processing AI turn for black
+[13:13] Bar: DEBUG: Showing dice result for black: 3, 2
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Bar: DEBUG: Updating dice for black: 3, 2
+[13:13] Bar: DEBUG: Rotated bdie1 to show face 3
+[13:13] Backgammon: DEBUG AI: Received FRESH_BOARD_STATE, syncing Brain
+[13:13] Backgammon: DEBUG BRAIN: SYNC_BOARD complete - WhiteBar=0 BlackBar=0
+[13:13] Bar: DEBUG: Rotated bdie2 to show face 2
+[13:13] Backgammon: *** NEW CODE LOADED *** BRAIN Level 0 generating move for black with dice 3,2
+[13:13] Backgammon: DEBUG BRAIN: No valid moves found
+[13:13] Backgammon: DEBUG AI: Brain returned NO_MOVE
+[13:13] Bar: DEBUG: Showing dice for player: black
+[13:13] Backgammon: Turn changed to: white
+[13:13] Bar: DEBUG: Showing dice for player: white
+[13:13] Bar: DEBUG: Showing dice for player: white

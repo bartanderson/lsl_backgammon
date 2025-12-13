@@ -1,0 +1,599 @@
+
+============================================================
+Turn 1: white rolled 1,5
+  Valid moves available from 4 points:
+    Point 0: can move to [1]
+    Point 11: can move to [16]
+    Point 16: can move to [17, 21]
+    Point 18: can move to [19]
+  Moves made: [(11, 16), (0, 1)]
+
+============================================================
+Turn 2: black rolled 4,2
+  Valid moves available from 5 points:
+    Point 3: can move to [1]
+    Point 5: can move to [1, 3]
+    Point 7: can move to [3, 5]
+    Point 12: can move to [8, 10]
+    Point 23: can move to [19, 21]
+  Moves made: [(5, 3), (12, 8)]
+
+============================================================
+Turn 3: white rolled 2,4
+  Valid moves available from 4 points:
+    Point 0: can move to [2, 4]
+    Point 11: can move to [13, 15]
+    Point 16: can move to [18, 20]
+    Point 18: can move to [20, 22]
+  Moves made: [(0, 2), (2, 6)]
+
+============================================================
+Turn 4: black rolled 4,6
+  Valid moves available from 5 points:
+    Point 5: can move to [1]
+    Point 7: can move to [3, 1]
+    Point 8: can move to [4, 2]
+    Point 12: can move to [8, 6]
+    Point 23: can move to [19, 17]
+  Moves made: [(12, 8), (7, 1)]
+
+============================================================
+Turn 5: white rolled 1,2
+  Valid moves available from 4 points:
+    Point 1: can move to [2]
+    Point 11: can move to [13]
+    Point 16: can move to [17, 18]
+    Point 18: can move to [19, 20]
+  Moves made: [(-2, 1), (16, 17)]
+
+============================================================
+Turn 6: black rolled 4,6
+  Valid moves available from 4 points:
+    Point 7: can move to [3]
+    Point 8: can move to [4, 2]
+    Point 12: can move to [8, 6]
+    Point 23: can move to [19, 17]
+  Moves made: [(-2, 20), (12, 6)]
+
+============================================================
+Turn 7: white rolled 3,2
+  Valid moves available from 6 points:
+    Point 1: can move to [4]
+    Point 6: can move to [9]
+    Point 11: can move to [14, 13]
+    Point 16: can move to [19, 18]
+    Point 17: can move to [20, 19]
+    Point 18: can move to [21, 20]
+  Moves made: [(-2, 1), (17, 20)]
+
+============================================================
+Turn 8: black rolled 2,1
+  Valid moves available from 7 points:
+    Point 3: can move to [2]
+    Point 5: can move to [3, 4]
+    Point 7: can move to [5]
+    Point 8: can move to [7]
+    Point 12: can move to [10]
+    Point 20: can move to [19]
+    Point 23: can move to [21, 22]
+  Moves made: [(-2, 22), (5, 4)]
+
+============================================================
+Turn 9: white rolled 6,6
+  Valid moves available from 2 points:
+    Point 11: can move to [17, 17, 17, 17]
+    Point 16: can move to [22, 22, 22, 22]
+  Moves made: [(11, 17), (11, 17), (11, 17), (11, 17)]
+
+============================================================
+Turn 10: black rolled 5,1
+  Valid moves available from 9 points:
+    Point 3: can move to [2]
+    Point 4: can move to [3]
+    Point 5: can move to [0, 4]
+    Point 7: can move to [2]
+    Point 8: can move to [3, 7]
+    Point 12: can move to [7, 11]
+    Point 20: can move to [15, 19]
+    Point 22: can move to [21]
+    Point 23: can move to [22]
+  Moves made: [(12, 6)]
+
+============================================================
+Turn 11: white rolled 2,1
+  Valid moves available from 4 points:
+    Point 1: can move to [2]
+    Point 16: can move to [18, 17]
+    Point 17: can move to [19, 18]
+    Point 18: can move to [19]
+  Moves made: [(1, 4)]
+
+============================================================
+Turn 12: black rolled 4,2
+  Valid moves available from 7 points:
+    Point 4: can move to [0, 2]
+    Point 5: can move to [3]
+    Point 7: can move to [3, 5]
+    Point 8: can move to [4]
+    Point 12: can move to [8, 10]
+    Point 22: can move to [20]
+    Point 23: can move to [19, 21]
+  Moves made: [(-2, 20), (22, 20)]
+
+============================================================
+Turn 13: white rolled 1,3
+  Valid moves available from 5 points:
+    Point 1: can move to [2]
+    Point 6: can move to [9]
+    Point 16: can move to [17, 19]
+    Point 17: can move to [18]
+    Point 18: can move to [19, 21]
+  Moves made: [(-2, 0), (1, 4)]
+
+============================================================
+Turn 14: black rolled 2,5
+  Valid moves available from 7 points:
+    Point 4: can move to [2]
+    Point 5: can move to [3, 0]
+    Point 7: can move to [5, 2]
+    Point 8: can move to [3]
+    Point 12: can move to [10, 7]
+    Point 20: can move to [15]
+    Point 23: can move to [21]
+  Moves made: [(5, 3), (8, 3)]
+
+============================================================
+Turn 15: white rolled 3,6
+  Valid moves available from 4 points:
+    Point 0: can move to [6]
+    Point 6: can move to [9, 12]
+    Point 16: can move to [19, 22]
+    Point 18: can move to [21]
+  Moves made: [(4, 13)]
+
+============================================================
+Turn 16: black rolled 6,5
+  Valid moves available from 5 points:
+    Point 5: can move to [0]
+    Point 7: can move to [2]
+    Point 8: can move to [2, 3]
+    Point 12: can move to [7]
+    Point 20: can move to [14, 15]
+  Moves made: [(12, 6), (6, 1)]
+
+============================================================
+Turn 17: white rolled 6,5
+  Valid moves available from 6 points:
+    Point 0: can move to [6, 5]
+    Point 1: can move to [6]
+    Point 6: can move to [12, 11]
+    Point 13: can move to [19, 18]
+    Point 16: can move to [22, 21]
+    Point 17: can move to [22]
+  Moves made: [(4, 10), (10, 15)]
+
+============================================================
+Turn 18: black rolled 4,5
+  Valid moves available from 6 points:
+    Point 4: can move to [0]
+    Point 5: can move to [0]
+    Point 7: can move to [3, 2]
+    Point 8: can move to [4, 3]
+    Point 20: can move to [15]
+    Point 23: can move to [19]
+  Moves made: [(7, 3), (6, 1)]
+
+============================================================
+Turn 19: white rolled 2,4
+  Valid moves available from 8 points:
+    Point 0: can move to [2, 4]
+    Point 1: can move to [5]
+    Point 6: can move to [8, 10]
+    Point 13: can move to [15, 17]
+    Point 15: can move to [17, 19]
+    Point 16: can move to [18]
+    Point 17: can move to [19, 21]
+    Point 18: can move to [22]
+  Moves made: [(0, 4), (13, 15)]
+
+============================================================
+Turn 20: black rolled 3,1
+  Valid moves available from 7 points:
+    Point 3: can move to [0, 2]
+    Point 4: can move to [3]
+    Point 5: can move to [2, 4]
+    Point 7: can move to [4]
+    Point 8: can move to [5, 7]
+    Point 20: can move to [19]
+    Point 23: can move to [20, 22]
+  Moves made: [(3, 0), (3, 2)]
+
+============================================================
+Turn 21: white rolled 2,3
+  Valid moves available from 5 points:
+    Point 6: can move to [8, 9]
+    Point 15: can move to [17, 18]
+    Point 16: can move to [18, 19]
+    Point 17: can move to [19]
+    Point 18: can move to [21]
+  Moves made: [(4, 6), (6, 9)]
+
+============================================================
+Turn 22: black rolled 6,4
+  Valid moves available from 5 points:
+    Point 4: can move to [0]
+    Point 7: can move to [3]
+    Point 8: can move to [2, 4]
+    Point 20: can move to [14]
+    Point 23: can move to [19]
+  Moves made: [(-2, 20), (8, 2)]
+
+============================================================
+Turn 23: white rolled 1,6
+  Valid moves available from 7 points:
+    Point 1: can move to [7]
+    Point 6: can move to [7, 12]
+    Point 9: can move to [10, 15]
+    Point 15: can move to [16, 21]
+    Point 16: can move to [17, 22]
+    Point 17: can move to [18]
+    Point 18: can move to [19]
+  Moves made: [(9, 15), (17, 18)]
+
+============================================================
+Turn 24: black rolled 1,4
+  Valid moves available from 6 points:
+    Point 3: can move to [2]
+    Point 4: can move to [3, 0]
+    Point 5: can move to [4]
+    Point 7: can move to [3]
+    Point 20: can move to [19]
+    Point 23: can move to [22, 19]
+  Moves made: [(3, 2), (7, 3)]
+
+============================================================
+Turn 25: white rolled 6,3
+  Valid moves available from 5 points:
+    Point 1: can move to [7, 4]
+    Point 6: can move to [12, 9]
+    Point 15: can move to [21, 18]
+    Point 16: can move to [22, 19]
+    Point 18: can move to [21]
+  Moves made: [(18, 21), (15, 21)]
+
+============================================================
+Turn 26: black rolled 6,3
+  Valid moves available from 4 points:
+    Point 3: can move to [0]
+    Point 5: can move to [2]
+    Point 20: can move to [14]
+    Point 23: can move to [20]
+  Moves made: [(3, 0), (20, 14)]
+
+============================================================
+Turn 27: white rolled 1,1
+  Valid moves available from 6 points:
+    Point 6: can move to [7, 7, 7, 7]
+    Point 15: can move to [16, 16, 16, 16]
+    Point 16: can move to [17, 17, 17, 17]
+    Point 17: can move to [18, 18, 18, 18]
+    Point 18: can move to [19, 19, 19, 19]
+    Point 21: can move to [22, 22, 22, 22]
+  Moves made: [(21, 22), (21, 22), (18, 19), (18, 19)]
+
+============================================================
+Turn 28: black rolled 4,1
+  Valid moves available from 4 points:
+    Point 3: can move to [2]
+    Point 4: can move to [0, 3]
+    Point 5: can move to [4]
+    Point 14: can move to [10, 13]
+  Moves made: [(2, 1), (5, 1)]
+
+============================================================
+Turn 29: white rolled 4,3
+  Valid moves available from 7 points:
+    Point 1: can move to [5, 4]
+    Point 6: can move to [10, 9]
+    Point 15: can move to [19, 18]
+    Point 16: can move to [19]
+    Point 17: can move to [21]
+    Point 18: can move to [22, 21]
+    Point 19: can move to [22]
+  Moves made: [(15, 19), (15, 18)]
+
+============================================================
+Turn 30: black rolled 4,6
+  Valid moves available from 3 points:
+    Point 4: can move to [0]
+    Point 14: can move to [10, 8]
+    Point 20: can move to [14]
+  Moves made: [(20, 14), (14, 10)]
+
+============================================================
+Turn 31: white rolled 2,2
+  Valid moves available from 4 points:
+    Point 6: can move to [8, 8, 8, 8]
+    Point 16: can move to [18, 18, 18, 18]
+    Point 17: can move to [19, 19, 19, 19]
+    Point 19: can move to [21, 21, 21, 21]
+  Moves made: [(18, 20), (18, 20), (16, 18), (17, 19)]
+
+============================================================
+Turn 32: black rolled 4,5
+  Valid moves available from 4 points:
+    Point 4: can move to [0]
+    Point 10: can move to [5]
+    Point 14: can move to [10, 9]
+    Point 20: can move to [15]
+  WARNING: No moves made despite valid moves available!
+
+============================================================
+Turn 33: white rolled 1,5
+  Valid moves available from 5 points:
+    Point 1: can move to [6]
+    Point 6: can move to [7, 11]
+    Point 16: can move to [17, 21]
+    Point 17: can move to [18, 22]
+    Point 18: can move to [19]
+  Moves made: [(16, 21), (16, 17)]
+
+============================================================
+Turn 34: black rolled 2,6
+  Valid moves available from 6 points:
+    Point 2: can move to [0]
+    Point 4: can move to [2]
+    Point 10: can move to [8, 4]
+    Point 14: can move to [12, 8]
+    Point 20: can move to [14]
+    Point 23: can move to [21]
+  WARNING: No moves made despite valid moves available!
+
+============================================================
+Turn 35: white rolled 6,3
+  Valid moves available from 4 points:
+    Point 1: can move to [7, 4]
+    Point 6: can move to [12, 9]
+    Point 18: can move to [21]
+    Point 19: can move to [22]
+  Moves made: [(17, 20)]
+
+============================================================
+Turn 36: black rolled 4,5
+  Valid moves available from 4 points:
+    Point 4: can move to [0]
+    Point 10: can move to [5]
+    Point 14: can move to [10, 9]
+    Point 20: can move to [16, 15]
+  WARNING: No moves made despite valid moves available!
+
+============================================================
+Turn 37: white rolled 2,3
+  Valid moves available from 5 points:
+    Point 1: can move to [4]
+    Point 6: can move to [8, 9]
+    Point 17: can move to [19]
+    Point 18: can move to [21]
+    Point 19: can move to [21, 22]
+  Moves made: [(18, 21), (19, 21)]
+
+============================================================
+Turn 38: black rolled 4,1
+  Valid moves available from 5 points:
+    Point 3: can move to [2]
+    Point 4: can move to [0, 3]
+    Point 10: can move to [9]
+    Point 14: can move to [10, 13]
+    Point 20: can move to [16]
+  Moves made: [(-2, 23), (14, 10)]
+
+============================================================
+Turn 39: white rolled 1,2
+  Valid moves available from 5 points:
+    Point 6: can move to [7, 8]
+    Point 17: can move to [18, 19]
+    Point 18: can move to [19]
+    Point 19: can move to [21]
+    Point 21: can move to [22]
+  Moves made: [(17, 18), (17, 19)]
+
+============================================================
+Turn 40: black rolled 1,3
+  Valid moves available from 5 points:
+    Point 3: can move to [2, 0]
+    Point 4: can move to [3]
+    Point 10: can move to [9, 7]
+    Point 20: can move to [17]
+    Point 23: can move to [20]
+  Moves made: [(1, 0), (3, 0)]
+
+============================================================
+Turn 41: white rolled 3,3
+  Valid moves available from 4 points:
+    Point 1: can move to [4, 4, 4, 4]
+    Point 6: can move to [9, 9, 9, 9]
+    Point 18: can move to [21, 21, 21, 21]
+    Point 19: can move to [22, 22, 22, 22]
+  Moves made: [(21, -1), (21, -1), (21, -1), (18, 21)]
+
+============================================================
+Turn 42: black rolled 3,1
+  Valid moves available from 5 points:
+    Point 3: can move to [0, 2]
+    Point 4: can move to [3]
+    Point 10: can move to [7, 9]
+    Point 20: can move to [17]
+    Point 23: can move to [20]
+  Moves made: [(1, 0), (3, 0)]
+
+============================================================
+Turn 43: white rolled 1,2
+  Valid moves available from 5 points:
+    Point 1: can move to [3]
+    Point 6: can move to [7, 8]
+    Point 18: can move to [19]
+    Point 19: can move to [21]
+    Point 21: can move to [22]
+  Moves made: [(21, -1)]
+
+============================================================
+Turn 44: black rolled 1,3
+  Valid moves available from 4 points:
+    Point 4: can move to [3]
+    Point 10: can move to [9, 7]
+    Point 20: can move to [17]
+    Point 23: can move to [20]
+  Moves made: [(2, 1), (10, 7)]
+
+============================================================
+Turn 45: white rolled 2,2
+  Valid moves available from 3 points:
+    Point 1: can move to [3, 3, 3, 3]
+    Point 6: can move to [8, 8, 8, 8]
+    Point 19: can move to [21, 21, 21, 21]
+  Moves made: [(20, -1), (19, 21), (19, 21)]
+
+============================================================
+Turn 46: black rolled 3,6
+  Valid moves available from 4 points:
+    Point 7: can move to [4]
+    Point 10: can move to [7, 4]
+    Point 20: can move to [17, 14]
+    Point 23: can move to [20, 17]
+  Moves made: [(7, 1), (10, 7)]
+
+============================================================
+Turn 47: white rolled 5,5
+  Valid moves available from 2 points:
+    Point 1: can move to [6, 6, 6, 6]
+    Point 6: can move to [11, 11, 11, 11]
+  Moves made: [(19, -1), (19, -1)]
+
+============================================================
+Turn 48: black rolled 1,1
+  Valid moves available from 2 points:
+    Point 4: can move to [3, 3, 3, 3]
+    Point 20: can move to [19, 19, 19, 19]
+  Moves made: [(1, 0), (1, 0), (2, 1), (1, 0)]
+
+============================================================
+Turn 49: white rolled 3,5
+  Valid moves available from 3 points:
+    Point 1: can move to [4, 6]
+    Point 6: can move to [9, 11]
+    Point 18: can move to [21]
+  Moves made: [(21, -1)]
+
+============================================================
+Turn 50: black rolled 3,4
+  Valid moves available from 4 points:
+    Point 4: can move to [0]
+    Point 7: can move to [4, 3]
+    Point 20: can move to [17, 16]
+    Point 23: can move to [20, 19]
+  Moves made: [(7, 0)]
+
+============================================================
+Turn 51: white rolled 4,3
+  Valid moves available from 3 points:
+    Point 1: can move to [5, 4]
+    Point 6: can move to [10, 9]
+    Point 18: can move to [22, 21]
+  Moves made: [(20, -1), (21, -1)]
+
+============================================================
+Turn 52: black rolled 1,5
+  Valid moves available from 2 points:
+    Point 4: can move to [3]
+    Point 20: can move to [19, 15]
+  Moves made: [(1, 0)]
+
+============================================================
+Turn 53: white rolled 1,4
+  Valid moves available from 3 points:
+    Point 1: can move to [2, 5]
+    Point 6: can move to [7, 10]
+    Point 18: can move to [19, 22]
+  Moves made: [(18, 19), (20, -1)]
+
+============================================================
+Turn 54: black rolled 1,2
+  Valid moves available from 3 points:
+    Point 4: can move to [3, 2]
+    Point 20: can move to [19, 18]
+    Point 23: can move to [21]
+  Moves made: [(1, 0), (23, 21)]
+
+============================================================
+Turn 55: white rolled 6,1
+  Valid moves available from 3 points:
+    Point 1: can move to [7, 2]
+    Point 6: can move to [12, 7]
+    Point 18: can move to [19]
+  Moves made: [(18, 19), (19, -1)]
+
+============================================================
+Turn 56: black rolled 1,6
+  Valid moves available from 4 points:
+    Point 4: can move to [3]
+    Point 20: can move to [19, 14]
+    Point 21: can move to [20, 15]
+    Point 23: can move to [17]
+  Moves made: [(21, 15), (15, 14)]
+
+============================================================
+Turn 57: white rolled 3,6
+  Valid moves available from 3 points:
+    Point 1: can move to [4, 7]
+    Point 6: can move to [9, 12]
+    Point 19: can move to [22]
+  Moves made: [(19, -1), (22, -1)]
+
+============================================================
+Turn 58: black rolled 4,2
+  Valid moves available from 4 points:
+    Point 4: can move to [0, 2]
+    Point 14: can move to [10, 12]
+    Point 20: can move to [16, 18]
+    Point 23: can move to [19, 21]
+  Moves made: [(14, 10), (10, 8)]
+
+============================================================
+Turn 59: white rolled 5,5
+  Valid moves available from 2 points:
+    Point 1: can move to [6, 6, 6, 6]
+    Point 6: can move to [11, 11, 11, 11]
+  Moves made: [(22, -1)]
+
+============================================================
+AUDIT COMPLETE
+Total turns analyzed: 59
+Issues found: 3
+
+DETAILED ISSUES:
+
+  Turn 32 (black):
+    Dice: [4, 5]
+    Valid moves were available but not made!
+      Point 4: [0]
+      Point 10: [5]
+      Point 14: [10, 9]
+      Point 20: [15]
+
+  Turn 34 (black):
+    Dice: [2, 6]
+    Valid moves were available but not made!
+      Point 2: [0]
+      Point 4: [2]
+      Point 10: [8, 4]
+      Point 14: [12, 8]
+      Point 20: [14]
+      Point 23: [21]
+
+  Turn 36 (black):
+    Dice: [4, 5]
+    Valid moves were available but not made!
+      Point 4: [0]
+      Point 10: [5]
+      Point 14: [10, 9]
+      Point 20: [16, 15]

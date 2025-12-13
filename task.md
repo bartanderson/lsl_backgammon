@@ -16,3 +16,9 @@
     - [x] Fix Bear-Off logic issues
     - [x] **Fix move validation bug (players losing 50% of moves)**
     - [x] **Fix human auto-roll bug (first roll phase)**
+
+- [/] **Visual Experience & Debugging**
+    - [x] Implement AI Marker Hiding (UI)
+    - [x] Implement Visual Error Feedback (UI/Render)
+    - [x] Implement Visual Dice Logic (including doubles)
+    - [x] Implement Turn Indicator Logic
