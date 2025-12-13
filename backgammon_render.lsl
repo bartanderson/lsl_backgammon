@@ -716,7 +716,9 @@ default {
                      if (movesLeft < 2) d2Alpha = 0;
                      if (movesLeft < 1) d1Alpha = 0;
                      
-                     string p = (player == "white") ? "w" : "b";
+                     string p = "b";
+                     if (player == "white") p = "w";
+                     
                      llSetLinkAlpha(GetLinkNumber(p+"die1"), d1Alpha, ALL_SIDES);
                      llSetLinkAlpha(GetLinkNumber(p+"die2"), d2Alpha, ALL_SIDES);
                      llSetLinkAlpha(GetLinkNumber(p+"die3"), d3Alpha, ALL_SIDES);
@@ -725,7 +727,9 @@ default {
              } else {
                  integer d1Alpha = (u1 > 0);
                  integer d2Alpha = (u2 > 0);
-                 string p = (player == "white") ? "w" : "b";
+                 string p = "b";
+                 if (player == "white") p = "w";
+                 
                  llSetLinkAlpha(GetLinkNumber(p+"die1"), d1Alpha, ALL_SIDES);
                  llSetLinkAlpha(GetLinkNumber(p+"die2"), d2Alpha, ALL_SIDES);
              }
