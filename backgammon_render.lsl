@@ -101,9 +101,13 @@ resetDice() {
     setDiePosition("wdie1", 0.55, 0.55, TRUE);  // White side - bottom right
     setDiePosition("bdie1", 0.45, 0.45, TRUE);  // Black side - top left
     
-    // Hide the secondary dice
+    // Hide the secondary dice (and doubles dice)
     setDiePosition("wdie2", 0.45, 0.55, FALSE);
     setDiePosition("bdie2", 0.55, 0.45, FALSE);
+    setDiePosition("wdie3", 0.0, 0.0, FALSE); 
+    setDiePosition("wdie4", 0.0, 0.0, FALSE);
+    setDiePosition("bdie3", 0.0, 0.0, FALSE);
+    setDiePosition("bdie4", 0.0, 0.0, FALSE);
     
     // Reset dice rotations to show 1 pip face up for all dice
     rotateDieToValue("wdie1", 1);
@@ -122,12 +126,24 @@ showPlayerDice(string player) {
         setDiePosition("wdie2", 0.45, 0.55, TRUE);  // Bottom left  
         setDiePosition("bdie1", 0.45, 0.45, FALSE); // Hide black dice
         setDiePosition("bdie2", 0.55, 0.45, FALSE); // Hide black dice
+        
+        // Ensure extra dice are hidden by default
+        setDiePosition("wdie3", 0.0, 0.0, FALSE); 
+        setDiePosition("wdie4", 0.0, 0.0, FALSE);
+        setDiePosition("bdie3", 0.0, 0.0, FALSE);
+        setDiePosition("bdie4", 0.0, 0.0, FALSE);
     } else {
         // Show black dice on BLACK side (top), hide white dice
         setDiePosition("wdie1", 0.55, 0.55, FALSE);  // Top right
         setDiePosition("wdie2", 0.45, 0.55, FALSE);  // Top left
         setDiePosition("bdie1", 0.45, 0.45, TRUE); // Hide white dice
         setDiePosition("bdie2", 0.55, 0.45, TRUE); // Hide white dice
+        
+        // Ensure extra dice are hidden by default
+        setDiePosition("wdie3", 0.0, 0.0, FALSE); 
+        setDiePosition("wdie4", 0.0, 0.0, FALSE);
+        setDiePosition("bdie3", 0.0, 0.0, FALSE);
+        setDiePosition("bdie4", 0.0, 0.0, FALSE);
     }
 }
 
@@ -698,6 +714,10 @@ default {
             setDiePosition("wdie2", 0.45, 0.55, FALSE);
             setDiePosition("bdie1", 0.45, 0.45, FALSE);
             setDiePosition("bdie2", 0.55, 0.45, FALSE);
+            setDiePosition("wdie3", 0.0, 0.0, FALSE);
+            setDiePosition("wdie4", 0.0, 0.0, FALSE);
+            setDiePosition("bdie3", 0.0, 0.0, FALSE);
+            setDiePosition("bdie4", 0.0, 0.0, FALSE);
         }
         else if (command == "DICE_REMAINING") {
              string player = llList2String(params, 1);
