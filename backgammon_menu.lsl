@@ -135,7 +135,7 @@ showMainMenu(key user) {
         menuText += "\nBlack AI: " + getLevelName(BLACK_AI_LEVEL);
     }
     
-    list buttons = ["AI Control", "Reset", "Cancel"];
+    list buttons = ["AI Control", "Reset", "Debug", "Cancel"];
     
     llDialog(user, menuText, buttons, menu_channel);
     llSetTimerEvent(menu_timeout);
@@ -296,6 +296,14 @@ handleMenuResponse(string message) {
     }
     else if (message == "AI Control") {
         showAIControlMenu();
+    }
+    else if (message == "Debug") {
+        DEBUG_MODE = !DEBUG_MODE;
+        string status = "OFF";
+        if (DEBUG_MODE) status = "ON";
+        llOwnerSay("Menu: Toggling Debug Mode to " + status);
+        llMessageLinked(LINK_SET, 0, "DEBUG_STATE|" + (string)DEBUG_MODE, NULL_KEY);
+        showMainMenu(menu_user);
     }
     
     // Level Selection Handlers
