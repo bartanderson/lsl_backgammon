@@ -35,11 +35,13 @@ showStatusIcon(string uuid) {
      if (whiteStatusLink > 0) {
          llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
-     }
+     } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing whiteStatusLink for " + uuid);
+     
      if (blackStatusLink > 0) {
          llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(blackStatusLink, 1.0, ALL_SIDES);
-     }
+     } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing blackStatusLink for " + uuid);
+     
      llSetTimerEvent(2.5);
 }
 
@@ -649,7 +651,16 @@ default {
         list params = llParseStringKeepNulls(str, ["|"], []);
         string command = llList2String(params, 0);
         
-        if (command == "BOARD_STATE") {
+        if (command == "DEBUG_LINKS") {
+             if (DEBUG_MODE) {
+                llOwnerSay("DEBUG RENDER LINK STATUS (MANUAL CHECK):");
+                llOwnerSay("Turn Indicator: " + (string)turnIndicatorLink);
+                llOwnerSay("White Status: " + (string)whiteStatusLink);
+                llOwnerSay("Black Status: " + (string)blackStatusLink);
+                llOwnerSay("Extra Dice: W3=" + (string)wdie3Link + " W4=" + (string)wdie4Link + " B3=" + (string)bdie3Link + " B4=" + (string)bdie4Link);
+             }
+        }
+        else if (command == "BOARD_STATE") {
             integer len = llGetListLength(params);
             
             // Count actual pieces on board (not just points)
@@ -772,7 +783,7 @@ default {
             if (turnIndicatorLink > 0) {
                 llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
                 llSetTimerEvent(1.0); 
-            }
+            } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for ERROR flash");
             
             string uuid = "";
             if (error == "NOT_YOUR_TURN") uuid = UUID_NOT_YOUR_TURN;
@@ -791,7 +802,7 @@ default {
                 vector color = <1,1,1>; // White
                 if (player == "black") color = <0,0,0>; // Black
                 llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
-            }
+            } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for FIRST_TURN");
             
             // 2. Show Winner's Dice (and hide loser's)
             showPlayerDice(player);
@@ -810,7 +821,7 @@ default {
                 vector color = <1,1,1>; // White
                 if (newTurn == "black") color = <0,0,0>; // Black
                 llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
-            }
+            } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for TURN_CHANGE");
         }
         else if(command == "BAR_STATE") {
             // The bar pieces are all parameters after the first one
