@@ -35,11 +35,13 @@ showStatusIcon(string uuid) {
      if (whiteStatusLink > 0) {
          llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
+         if (DEBUG_MODE) llOwnerSay("DEBUG: Set White Status Icon: " + uuid);
      } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing whiteStatusLink for " + uuid);
      
      if (blackStatusLink > 0) {
          llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(blackStatusLink, 1.0, ALL_SIDES);
+         if (DEBUG_MODE) llOwnerSay("DEBUG: Set Black Status Icon: " + uuid);
      } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing blackStatusLink for " + uuid);
      
      llSetTimerEvent(2.5);
@@ -698,7 +700,14 @@ default {
         }
         else if (command == "DEBUG_STATE") {
             DEBUG_MODE = (integer)llList2String(params, 1);
-            if (DEBUG_MODE != FALSE) llOwnerSay("render: Debug mode " + (string)("ON"));
+            if (DEBUG_MODE != FALSE) {
+                llOwnerSay("render: Debug mode ON");
+                llOwnerSay("DEBUG RENDER LINK STATUS:");
+                llOwnerSay("Turn Indicator: " + (string)turnIndicatorLink);
+                llOwnerSay("White Status: " + (string)whiteStatusLink);
+                llOwnerSay("Black Status: " + (string)blackStatusLink);
+                llOwnerSay("Extra Dice: W3=" + wdie3Link + " W4=" + wdie4Link + " B3=" + bdie3Link + " B4=" + bdie4Link);
+            }
         }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
             if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Positioning dice for first roll");        
@@ -802,6 +811,7 @@ default {
                 vector color = <1,1,1>; // White
                 if (player == "black") color = <0,0,0>; // Black
                 llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+                if (DEBUG_MODE) llOwnerSay("DEBUG: FIRST_TURN Indicator set to " + (string)color);
             } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for FIRST_TURN");
             
             // 2. Show Winner's Dice (and hide loser's)
@@ -821,6 +831,7 @@ default {
                 vector color = <1,1,1>; // White
                 if (newTurn == "black") color = <0,0,0>; // Black
                 llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+                if (DEBUG_MODE) llOwnerSay("DEBUG: Turn Indicator set to " + (string)color);
             } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for TURN_CHANGE");
         }
         else if(command == "BAR_STATE") {

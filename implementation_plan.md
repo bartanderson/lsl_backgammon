@@ -9,6 +9,12 @@ The user observed that the AI holds pieces in the opponent's home board even whe
 - **Effect:** The AI sees breaking an anchor as a `-50` point penalty. Unless the move gains >50 points worth of pip advantage (which is huge, as `W_PIP_WEIGHT` is 1), the AI will refuse to break the anchor.
 - **Result:** The AI gets stuck holding anchors while losing the race.
 
+## Visual Experience & Multi-Player Support (Current Focus)
+The user reported regressions in visual elements (ghost dice, turn indicator not changing) and multi-player issues (messaging limits).
+- **Status Displays:** Images for "Not your turn", etc. needing validation.
+- **Turn Indicator:** Prims needing link detection verification.
+- **Multi-Player:** Messages were owner-only; updated to use `llRegionSayTo` for specific player feedback.
+
 ## Proposed Solution: Dynamic Anchor Weighting
 We will modify `evaluateBoard` in `backgammon_AI_brain.lsl` to adjust the value of `W_ANCHOR` based on the **Pip Difference** (Race State).
 
