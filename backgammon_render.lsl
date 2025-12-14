@@ -119,6 +119,17 @@ resetDice() {
     setDiePosition("bdie3", 0.0, 0.0, FALSE);
     setDiePosition("bdie4", 0.0, 0.0, FALSE);
     
+    // Force Alpha 1.0 to ensure dice are visible (fix for potential invisible state)
+    integer w1 = GetLinkNumber("wdie1");
+    integer w2 = GetLinkNumber("wdie2");
+    integer b1 = GetLinkNumber("bdie1");
+    integer b2 = GetLinkNumber("bdie2");
+    
+    if (w1 > 0) llSetLinkAlpha(w1, 1.0, ALL_SIDES);
+    if (w2 > 0) llSetLinkAlpha(w2, 1.0, ALL_SIDES);
+    if (b1 > 0) llSetLinkAlpha(b1, 1.0, ALL_SIDES);
+    if (b2 > 0) llSetLinkAlpha(b2, 1.0, ALL_SIDES);
+    
     // Reset dice rotations to show 1 pip face up for all dice
     rotateDieToValue("wdie1", 1);
     rotateDieToValue("wdie2", 1);
