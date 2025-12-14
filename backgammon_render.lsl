@@ -95,6 +95,9 @@ setDiePosition(string dieName, float u, float v, integer isVisible) {
     vector localPos = <x, y, z>;
     
     if (DEBUG_MODE != FALSE) {
+        if (dieName == "wdie1") {
+            llOwnerSay("DEBUG: setDiePosition wdie1 - Visible: " + (string)isVisible + " Pos: " + (string)localPos + " Link: " + (string)linkNum);
+        }
         //llOwnerSay("DEBUG: Positioning " + dieName + " at " + (string)localPos + ", visible: " + (string)isVisible);
     }
     
