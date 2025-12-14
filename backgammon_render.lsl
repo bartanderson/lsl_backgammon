@@ -33,13 +33,13 @@ string UUID_BEAR_OFF = "abe37417-abdf-85c2-9454-9766515ecdde";
 
 showStatusIcon(string uuid) {
      if (whiteStatusLink > 0) {
-         llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+         llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, ALL_SIDES, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
          if (DEBUG_MODE) llOwnerSay("DEBUG: Set White Status Icon: " + uuid);
      } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing whiteStatusLink for " + uuid);
      
      if (blackStatusLink > 0) {
-         llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, 0, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+         llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, ALL_SIDES, uuid, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
          llSetLinkAlpha(blackStatusLink, 1.0, ALL_SIDES);
          if (DEBUG_MODE) llOwnerSay("DEBUG: Set Black Status Icon: " + uuid);
      } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing blackStatusLink for " + uuid);
@@ -790,7 +790,7 @@ default {
             string error = llList2String(params, 2);
             
             if (turnIndicatorLink > 0) {
-                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
                 llSetTimerEvent(1.0); 
             } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for ERROR flash");
             
@@ -810,7 +810,7 @@ default {
             if (turnIndicatorLink > 0) {
                 vector color = <1,1,1>; // White
                 if (player == "black") color = <0,0,0>; // Black
-                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, color, 1.0]);
                 if (DEBUG_MODE) llOwnerSay("DEBUG: FIRST_TURN Indicator set to " + (string)color);
             } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for FIRST_TURN");
             
@@ -830,7 +830,7 @@ default {
             if (turnIndicatorLink > 0) {
                 vector color = <1,1,1>; // White
                 if (newTurn == "black") color = <0,0,0>; // Black
-                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, color, 1.0]);
+                llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, color, 1.0]);
                 if (DEBUG_MODE) llOwnerSay("DEBUG: Turn Indicator set to " + (string)color);
             } else if (DEBUG_MODE) llOwnerSay("DEBUG: Missing turnIndicatorLink for TURN_CHANGE");
         }
