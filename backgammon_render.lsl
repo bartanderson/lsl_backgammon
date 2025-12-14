@@ -641,6 +641,7 @@ default {
         init_render();
         // Initial state: Storage
         resetToStorage();
+        resetDice(); // Ensure dice are visible and positioned on reset
     }
     
     timer() {
