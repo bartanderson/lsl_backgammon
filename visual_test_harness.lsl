@@ -21,42 +21,38 @@ default {
         
         if (state_index == 0) {
             llOwnerSay("Test 0: Turn Indicator - WHITE <1,1,1>");
-            // Exact code from Render:
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+            // Force Blank Texture so color shows
+            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
         }
         else if (state_index == 1) {
             llOwnerSay("Test 1: Turn Indicator - BLACK <0,0,0>");
-            // Exact code from Render:
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_COLOR, ALL_SIDES, <0,0,0>, 1.0]);
+            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <0,0,0>, 1.0]);
         }
         else if (state_index == 2) {
             llOwnerSay("Test 2: Turn Indicator - ERROR RED <1,0,0>");
-            // Exact code from Render:
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
+            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
         }
         else if (state_index == 3) {
-            llOwnerSay("Test 3: Status Display - 'Not Your Turn'");
-            // Exact code from Render (Face 0):
+            llOwnerSay("Test 3: Status Display - 'Not Your Turn' (ALL SIDES)");
+            // Use ALL_SIDES to rule out face mapping issues
             llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, 0, UUID_NOT_YOUR_TURN, <1,1,0>, ZERO_VECTOR, 0.0, 
+                PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_TURN, <1,1,0>, ZERO_VECTOR, 0.0, 
                 PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
             ]);
             llSetAlpha(1.0, ALL_SIDES);
         }
         else if (state_index == 4) {
-            llOwnerSay("Test 4: Status Display - 'Not Your Piece'");
-            // Exact code from Render (Face 0):
+            llOwnerSay("Test 4: Status Display - 'Not Your Piece' (ALL SIDES)");
             llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, 0, UUID_NOT_YOUR_PIECE, <1,1,0>, ZERO_VECTOR, 0.0, 
+                PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_PIECE, <1,1,0>, ZERO_VECTOR, 0.0, 
                 PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
             ]);
             llSetAlpha(1.0, ALL_SIDES);
         }
         else if (state_index == 5) {
-            llOwnerSay("Test 5: Status Display - 'No Valid Moves'");
-            // Exact code from Render (Face 0):
+            llOwnerSay("Test 5: Status Display - 'No Valid Moves' (ALL SIDES)");
             llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, 0, UUID_NO_VALID_MOVES, <1,1,0>, ZERO_VECTOR, 0.0, 
+                PRIM_TEXTURE, ALL_SIDES, UUID_NO_VALID_MOVES, <1,1,0>, ZERO_VECTOR, 0.0, 
                 PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
             ]);
             llSetAlpha(1.0, ALL_SIDES);
