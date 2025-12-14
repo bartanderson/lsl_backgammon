@@ -30,6 +30,10 @@ integer UI_SIMULATING = FALSE;
 integer UI_WHITE_AI = FALSE;
 integer UI_BLACK_AI = FALSE;
 
+// First Roll State Tracking
+integer gWhiteFirstRollDone = FALSE;
+integer gBlackFirstRollDone = FALSE;
+
 // Click debouncing
 float gLastClickTime = 0.0;
 float CLICK_DEBOUNCE = 0.5; // 500ms
@@ -173,6 +177,9 @@ resetUIState() {
     selectedPoint = -1;
     selectedPlayer = NULL_KEY;
     validMoves = [];
+    
+    gWhiteFirstRollDone = FALSE;
+    gBlackFirstRollDone = FALSE;
     
     white = NULL_KEY;
     black = NULL_KEY;
@@ -538,8 +545,21 @@ default {
             
             // TEMPORARY FIX: Allow dice rolling in both RESET and FIRST_ROLL states
             if (gCurrentState == STATE_RESET || gCurrentState == STATE_FIRST_ROLL) {
+                // Prevent re-rolling if already rolled
+                if (player == "white" && gWhiteFirstRollDone) {
+                     sendPrivateMessage(detLinkKey, "You have already rolled.");
+                     return;
+                }
+                if (player == "black" && gBlackFirstRollDone) {
+                     sendPrivateMessage(detLinkKey, "You have already rolled.");
+                     return;
+                }
+
                 llOwnerSay("DEBUG: Allowing roll in reset/first_roll state");
                 if (isPlayerAllowed(detLinkKey, player)) {
+                    // Mark as rolled
+                    if (player == "white") gWhiteFirstRollDone = TRUE;
+                    else if (player == "black") gBlackFirstRollDone = TRUE;
                     integer die1 = 1 + (integer)llFrand(6);
                     integer die2 = 0;
                     
@@ -615,10 +635,14 @@ default {
         }
         else if (command == "START_FIRST_ROLL") {
             gCurrentState = STATE_FIRST_ROLL;
+            gWhiteFirstRollDone = FALSE;
+            gBlackFirstRollDone = FALSE;
             llMessageLinked(LINK_SET, 0, "POSITION_DICE_FIRST_ROLL", NULL_KEY);
             sendMessage("Both players seated. Please click your dice to roll for first turn.");
         }
         else if (command == "REROLL_FIRST") {
+            gWhiteFirstRollDone = FALSE;
+            gBlackFirstRollDone = FALSE;
             sendMessage("Roll again, tied values.");
         }
         else if (command == "FIRST_TURN") {
