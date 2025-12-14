@@ -713,7 +713,10 @@ default {
             }
         }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
-            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: Positioning dice for first roll");        
+            integer w1 = GetLinkNumber("wdie1");
+            integer b1 = GetLinkNumber("bdie1");
+            if (DEBUG_MODE != FALSE) llOwnerSay("DEBUG: POSITION_DICE_FIRST_ROLL - wdie1 Link: " + (string)w1 + " bdie1 Link: " + (string)b1);
+            
             // Position white die and black die at corners
             setDiePosition("wdie1", 0.55, 0.55, TRUE);
             setDiePosition("bdie1", 0.45, 0.45, TRUE);
