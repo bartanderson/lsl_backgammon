@@ -710,7 +710,7 @@ default {
                 llOwnerSay("Turn Indicator: " + (string)turnIndicatorLink);
                 llOwnerSay("White Status: " + (string)whiteStatusLink);
                 llOwnerSay("Black Status: " + (string)blackStatusLink);
-                llOwnerSay("Extra Dice: W3=" + wdie3Link + " W4=" + wdie4Link + " B3=" + bdie3Link + " B4=" + bdie4Link);
+                llOwnerSay("Extra Dice: W3=" + (string)wdie3Link + " W4=" + (string)wdie4Link + " B3=" + (string)bdie3Link + " B4=" + (string)bdie4Link);
             }
         }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
