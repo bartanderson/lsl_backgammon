@@ -297,8 +297,11 @@ init_render() {
 
 integer GetLinkNumber(string linkName) {
     integer x; integer numprims = llGetNumberOfPrims();
+    string searchName = llStringTrim(llToLower(linkName), STRING_TRIM);
+    
     for(x = 1; x <= numprims; x++) {
-        if(linkName == llGetLinkName(x)) return x;
+        string objName = llStringTrim(llToLower(llGetLinkName(x)), STRING_TRIM);
+        if(searchName == objName) return x;
     }
     return 0;
 }

@@ -14,6 +14,7 @@ The user reported regressions in visual elements (ghost dice, turn indicator not
 - **Status Displays:** Images for "Not your turn", etc. needing validation.
 - **Turn Indicator:** Prims needing link detection verification.
 - **Multi-Player:** Messages were owner-only; updated to use `llRegionSayTo` for specific player feedback.
+- **Naming Robustness:** Implemented fuzzy matching (case-insensitive, trimmed) for all `GetLinkNumber` calls to handle user object naming inconsistencies (e.g., "wdie1 " vs "wdie1").
 
 ## Proposed Solution: Dynamic Anchor Weighting
 We will modify `evaluateBoard` in `backgammon_AI_brain.lsl` to adjust the value of `W_ANCHOR` based on the **Pip Difference** (Race State).
