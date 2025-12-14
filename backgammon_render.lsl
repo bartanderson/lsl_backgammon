@@ -644,6 +644,17 @@ default {
         bdie3Link = GetLinkNumber("bdie3");
         bdie4Link = GetLinkNumber("bdie4");
         
+        if (turnIndicatorLink > 0) {
+            list properties = llGetLinkPrimitiveParams(turnIndicatorLink, [PRIM_DESC]);
+            string desc = llList2String(properties, 0);
+            if (desc == "DEBUG_ON") {
+                 DEBUG_MODE = TRUE;
+                 llOwnerSay("render: Persistence restored - DEBUG MODE ON");
+                 // Broadcast to sync other scripts
+                 llMessageLinked(LINK_SET, 0, "DEBUG_STATE|TRUE", NULL_KEY); 
+            }
+        }
+
         if (DEBUG_MODE) {
             llOwnerSay("DEBUG RENDER LINK STATUS:");
             llOwnerSay("Turn Indicator: " + (string)turnIndicatorLink);
@@ -725,6 +736,12 @@ default {
                 llOwnerSay("White Status: " + (string)whiteStatusLink);
                 llOwnerSay("Black Status: " + (string)blackStatusLink);
                 llOwnerSay("Extra Dice: W3=" + (string)wdie3Link + " W4=" + (string)wdie4Link + " B3=" + (string)bdie3Link + " B4=" + (string)bdie4Link);
+                
+                // Persistence: Write to turn_indicator description
+                if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_DESC, "DEBUG_ON"]);
+            } else {
+                // Persistence: Write OFF
+                if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_DESC, "DEBUG_OFF"]);
             }
         }
         else if (command == "POSITION_DICE_FIRST_ROLL") {
