@@ -1,61 +1,84 @@
 // VISUAL TEST HARNESS
-// Drop this into your 'turn_indicator' or 'status_display' object to test parameters.
-// Touch the object to cycle through states.
+// Drop this into your ROOT object (the backgammon board).
+// It will search for 'turn_indicator' and 'status_display_white/black' and test them.
 
 integer state_index = 0;
+integer turnIndicatorLink = 0;
+integer whiteStatusLink = 0;
+integer blackStatusLink = 0;
 
-// UUIDs from backgammon_render.lsl
+// UUIDs
 string UUID_NOT_YOUR_TURN = "3261a0eb-dfaf-97bf-c540-ea2ef20af175";
 string UUID_NOT_YOUR_PIECE = "eba0c4b0-f618-74c8-ffac-c4b63b6c5443";
 string UUID_NO_VALID_MOVES = "e0415315-4b10-930c-933d-47ba85ba6c92";
 
+integer GetLinkNumber(string linkName) {
+    integer numprims = llGetNumberOfPrims();
+    integer i;
+    for(i = 1; i <= numprims; i++) {
+        if(llGetLinkName(i) == linkName) return i;
+    }
+    // Check if it's the root prim (in a single prim object, or root of linkset)
+    if (llGetObjectName() == linkName) return 1; 
+    
+    return 0;
+}
+
 default {
     state_entry() {
-        llOwnerSay("Visual Test Harness Ready.");
-        llOwnerSay("Touch to cycle: White -> Black -> Red (Error) -> Icon 1 -> Icon 2 -> Icon 3");
+        llOwnerSay("Visual Test Harness: Scanning Linkset...");
+        turnIndicatorLink = GetLinkNumber("turn_indicator");
+        whiteStatusLink = GetLinkNumber("status_display_white");
+        blackStatusLink = GetLinkNumber("status_display_black");
+        
+        llOwnerSay("Links Found:");
+        llOwnerSay("- turn_indicator: " + (string)turnIndicatorLink);
+        llOwnerSay("- status_display_white: " + (string)whiteStatusLink);
+        llOwnerSay("- status_display_black: " + (string)blackStatusLink);
+        
+        if (turnIndicatorLink == 0 && whiteStatusLink == 0) {
+            llOwnerSay("WARNING: No valid links found! Check your object names.");
+        }
+        
+        llOwnerSay("Touch root to cycle test patterns.");
     }
 
     touch_start(integer total_number) {
         state_index++;
-        if (state_index > 5) state_index = 0;
+        if (state_index > 3) state_index = 0;
         
         if (state_index == 0) {
-            llOwnerSay("Test 0: Turn Indicator - WHITE <1,1,1>");
-            // Force Blank Texture so color shows
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+            llOwnerSay("Test 0: Resetting/Clearing All");
+            if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+            if (whiteStatusLink > 0) llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 0.0]);
+            if (blackStatusLink > 0) llSetLinkPrimitiveParamsFast(blackStatusLink, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 0.0]);
         }
         else if (state_index == 1) {
-            llOwnerSay("Test 1: Turn Indicator - BLACK <0,0,0>");
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <0,0,0>, 1.0]);
+            llOwnerSay("Test 1: Turn Indicator RED, Status 'Not Your Turn'");
+            if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
+            
+            if (whiteStatusLink > 0) {
+                llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_TURN, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+                llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
+            }
         }
         else if (state_index == 2) {
-            llOwnerSay("Test 2: Turn Indicator - ERROR RED <1,0,0>");
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [PRIM_TEXTURE, ALL_SIDES, TEXTURE_BLANK, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,0,0>, 1.0]);
+            llOwnerSay("Test 2: Turn Indicator BLACK, Status 'Not Your Piece'");
+            if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <0,0,0>, 1.0]);
+            
+            if (whiteStatusLink > 0) {
+                llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_PIECE, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+                llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
+            }
         }
         else if (state_index == 3) {
-            llOwnerSay("Test 3: Status Display - 'Not Your Turn' (ALL SIDES)");
-            // Use ALL_SIDES to rule out face mapping issues
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_TURN, <1,1,0>, ZERO_VECTOR, 0.0, 
-                PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
-            ]);
-            llSetAlpha(1.0, ALL_SIDES);
-        }
-        else if (state_index == 4) {
-            llOwnerSay("Test 4: Status Display - 'Not Your Piece' (ALL SIDES)");
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, ALL_SIDES, UUID_NOT_YOUR_PIECE, <1,1,0>, ZERO_VECTOR, 0.0, 
-                PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
-            ]);
-            llSetAlpha(1.0, ALL_SIDES);
-        }
-        else if (state_index == 5) {
-            llOwnerSay("Test 5: Status Display - 'No Valid Moves' (ALL SIDES)");
-            llSetLinkPrimitiveParamsFast(LINK_THIS, [
-                PRIM_TEXTURE, ALL_SIDES, UUID_NO_VALID_MOVES, <1,1,0>, ZERO_VECTOR, 0.0, 
-                PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0
-            ]);
-            llSetAlpha(1.0, ALL_SIDES);
+            llOwnerSay("Test 3: Turn Indicator WHITE, Status 'No Moves'");
+            if (turnIndicatorLink > 0) llSetLinkPrimitiveParamsFast(turnIndicatorLink, [PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+            
+            if (whiteStatusLink > 0) {
+                llSetLinkPrimitiveParamsFast(whiteStatusLink, [PRIM_TEXTURE, ALL_SIDES, UUID_NO_VALID_MOVES, <1,1,0>, ZERO_VECTOR, 0.0, PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+                llSetLinkAlpha(whiteStatusLink, 1.0, ALL_SIDES);
+            }
         }
     }
 }
